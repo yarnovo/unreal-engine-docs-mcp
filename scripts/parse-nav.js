@@ -10,8 +10,8 @@ const __dirname = path.dirname(__filename);
 
 function parseNavigation() {
     try {
-        // 读取 HTML 文件
-        const htmlPath = path.join(__dirname, '..', 'nav.html');
+        // 读取 HTML 文件（从动态生成的文件读取）
+        const htmlPath = path.join(__dirname, '..', 'nav-dist.html');
         const htmlContent = readFileSync(htmlPath, 'utf-8');
         
         // 解析 HTML

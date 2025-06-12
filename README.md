@@ -1,176 +1,134 @@
-# Unreal Engine Docs MCP Server
+# 虚幻引擎文档导航解析器
 
-🎮 **虚幻引擎文档 MCP 服务器** - 为Model Context Protocol提供虚幻引擎5.6中文文档访问。
+这个项目用于动态获取和解析虚幻引擎官方文档的完整导航结构。
 
-## 🚀 快速开始
+## 项目背景
 
-### 安装使用
+虚幻引擎官方文档网站使用动态加载的导航菜单，只有点击展开按钮才能显示子菜单项。传统的静态HTML抓取只能获取到第一层的导航链接，无法获取完整的文档结构。
 
-```bash
-# 直接运行（推荐）
-npx unreal-engine-docs-mcp
+## 解决方案
 
-# 或全局安装
-npm install -g unreal-engine-docs-mcp
-unreal-engine-docs-mcp
-```
+本项目使用无头浏览器(Puppeteer)来模拟用户操作，自动点击所有可展开的菜单项，获取完整的导航结构。
 
-### MCP 客户端配置
+## 功能特性
 
-在你的 MCP 配置文件中添加：
+- 🤖 **自动化展开**: 使用无头浏览器自动展开所有菜单项
+- 📊 **数据对比**: 对比静态和动态获取的链接数量
+- 🔄 **增量更新**: 多轮展开策略确保获取所有嵌套菜单
+- 📁 **结构化输出**: 生成JSON格式的链接列表
 
-```json
-{
-  "mcpServers": {
-    "unreal-engine-docs": {
-      "command": "npx",
-      "args": ["-y", "unreal-engine-docs-mcp"]
-    }
-  }
-}
-```
-
-## 🔧 可用工具
-
-### `get_docs_list` - 获取所有文档列表
-```json
-{
-  "name": "get_docs_list",
-  "arguments": {}
-}
-```
-
-返回所有虚幻引擎文档链接，无需分页参数。
-
-## 📋 文档数据
-
-- **总链接数**: 87个
-- **文档版本**: 虚幻引擎5.6中文文档
-- **涵盖内容**: 入门指南、编程教程、蓝图、C++、工具使用等
-
-## 🛠️ 开发
-
-### 本地开发
-
-```bash
-# 克隆项目
-git clone <your-repo-url>
-cd unreal-engine-docs-mcp
-
-# 安装依赖
-npm install
-
-# 解析导航数据（如需更新文档）
-npm run parse-nav
-
-# 运行测试
-npm test
-
-# 构建项目
-npm run build
-
-# 本地运行
-npm run dev
-```
-
-### 项目结构
+## 文件结构
 
 ```
-├── src/
-│   ├── index.ts          # MCP服务器主文件
-│   └── index.test.ts     # 测试文件
 ├── scripts/
-│   └── parse-nav.js      # HTML解析脚本
+│   ├── fetch-nav.js     # 动态获取导航结构
+│   └── parse-nav.js     # 解析HTML并生成JSON
 ├── sources/
-│   └── list.json         # 文档链接数据
-├── .github/workflows/
-│   └── release.yml       # GitHub Actions配置
-└── nav.html             # 原始导航HTML文件
+│   └── list.json        # 生成的链接列表
+├── nav.html             # 原始静态导航(87个链接)
+├── nav-dist.html        # 动态获取的完整导航(2415个链接)
+└── package.json         # 项目配置
 ```
 
-## 🚀 发布流程
+## 使用方法
 
-### GitHub Actions 自动化
-
-本项目使用 GitHub Actions 实现自动测试和发布：
-
-#### 🔄 **触发条件**
-- **Push 到 main 分支**: 运行测试
-- **Pull Request**: 运行测试  
-- **版本标签 (v*.*.*)**: 运行测试 + 发布到 NPM
-
-#### 📝 **发布步骤**
-
-1. **更新版本号**
-   ```bash
-   npm version patch  # 或 minor, major
-   ```
-
-2. **推送标签**
-   ```bash
-   git push origin main --tags
-   ```
-
-3. **自动发布**
-   - GitHub Actions 会自动运行测试
-   - 验证版本标签与 package.json 匹配
-   - 发布到 NPM
-   - 创建 GitHub Release
-
-#### 🔑 **所需 Secrets**
-
-在 GitHub 仓库设置中添加以下 secrets：
-
-- `NPM_TOKEN`: NPM 发布令牌
-  ```bash
-  # 获取 NPM token
-  npm login
-  npm token create --read-only=false
-  ```
-
-### 手动发布
-
+### 安装依赖
 ```bash
-# 构建项目
-npm run build
-
-# 发布到 NPM
-npm publish
+npm install
 ```
 
-## ⚙️ GitHub Actions 详细配置
+### 获取动态导航
+```bash
+npm run fetch-nav
+```
 
-### 测试作业 (test)
-- **运行环境**: Ubuntu Latest
-- **Node.js 版本**: 18.x, 20.x (矩阵测试)
-- **步骤**:
-  1. 检出代码
-  2. 设置 Node.js
-  3. 安装依赖
-  4. 运行测试
-  5. 构建项目
-  6. 解析文档数据
-  7. 验证输出
+### 解析导航数据
+```bash
+npm run parse-nav
+```
 
-### 发布作业 (publish)
-- **触发条件**: 仅在版本标签时运行
-- **依赖**: test 作业成功
-- **步骤**:
-  1. 检出代码
-  2. 设置 Node.js
-  3. 安装依赖和构建
-  4. 验证版本匹配
-  5. 发布到 NPM
-  6. 创建 GitHub Release
+### 完整流程
+```bash
+npm test
+# 或
+npm run build
+```
 
-## 📄 许可证
+## 成果统计
 
-ISC License
+- **原始nav.html链接数量**: 87个
+- **动态nav-dist.html链接数量**: 2415个  
+- **增加的链接数量**: 2328个
+- **展开的菜单项**: 492个
+- **展开轮次**: 7轮
 
-## 🤝 贡献
+## 技术细节
 
-欢迎提交 Issue 和 Pull Request！
+### 展开策略
+脚本使用多轮展开策略，每轮查找所有未展开的按钮并点击，直到没有新的可展开项为止。
 
----
+### 选择器优化
+```javascript
+// 查找未展开的菜单按钮
+const expandButtons = await page.$$('.btn-expander .icon-arrow-forward-ios:not(.is-rotated)');
+```
 
-**Made with ❤️ for Unreal Engine developers** 
+### 错误处理
+- 自动重试机制
+- 滚动到可视区域
+- DOM更新等待
+- 异常捕获和日志记录
+
+## 生成的数据格式
+
+```json
+{
+  "total": 2415,
+  "generated": "2025-06-12T17:14:50.065Z",
+  "links": [
+    {
+      "title": "新内容",
+      "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/whats-new",
+      "path": "/documentation/zh-cn/unreal-engine/whats-new"
+    }
+  ]
+}
+```
+
+## 性能指标
+
+- 浏览器启动时间: ~2-3秒
+- 页面加载时间: ~5-10秒  
+- 导航展开时间: ~30-60秒
+- 数据解析时间: ~1-2秒
+- 总执行时间: ~40-80秒
+
+## 技术栈
+
+- **Node.js**: 运行环境
+- **Puppeteer**: 无头浏览器控制
+- **JSDOM**: HTML解析
+- **ES Modules**: 模块化开发
+
+## 注意事项
+
+1. 需要稳定的网络连接
+2. 第一次运行会下载Chromium浏览器
+3. 运行时间取决于网络速度和页面响应
+4. 建议在稳定的环境中运行
+
+## 后续优化
+
+- [ ] 添加增量更新机制
+- [ ] 支持多语言版本
+- [ ] 添加缓存机制
+- [ ] 错误重试策略优化
+- [ ] 并发处理优化
+
+## 贡献
+
+欢迎提交Issue和Pull Request来改进这个项目。
+
+## 许可证
+
+MIT License 

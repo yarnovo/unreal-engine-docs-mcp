@@ -26,6 +26,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "parse-nav": "node scripts/parse-nav.js",
+    "fetch-nav": "node scripts/fetch-nav.js",
     "postversion": "git push origin --follow-tags",
     "prepublishOnly": "npm run build"
   },
@@ -40,7 +41,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "jsdom": "^26.1.0",
-    "zod": "^3.25.63"
+    "zod": "^3.25.63",
+    "puppeteer": "^22.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
