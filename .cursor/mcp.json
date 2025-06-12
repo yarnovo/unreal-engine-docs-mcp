@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "unreal-engine-docs": {
+      "command": "npx",
+      "args": ["unreal-engine-docs-mcp"]
+    }
+  }
+}

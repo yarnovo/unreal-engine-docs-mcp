@@ -1,0 +1,195 @@
+name: Test and Release
+
+# 触发条件
+on:
+  # 推送到 main 分支
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*.*.*'  # 版本标签 (v1.0.0, v1.2.3, etc.)
+  
+  # Pull Request 到 main 分支
+  pull_request:
+    branches: [ main ]
+  
+  # 手动触发
+  workflow_dispatch:
+
+# 权限设置
+permissions:
+  contents: write  # 创建 release 需要写权限
+  packages: write  # 发布包需要写权限
+
+# 定义作业
+jobs:
+  # 测试作业 - 总是运行
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # 设置 Node.js
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      # 安装依赖
+      - name: Install dependencies
+        run: npm ci
+      
+      # 运行测试
+      - name: Run tests
+        run: npm test
+      
+      # 构建项目
+      - name: Build project
+        run: npm run build
+      
+      # 生成文档数据
+      - name: Parse navigation data
+        run: npm run parse-nav
+      
+      # 验证构建输出
+      - name: Verify build output
+        run: |
+          if [ ! -f "dist/index.js" ]; then
+            echo "Build failed: dist/index.js not found"
+            exit 1
+          fi
+          echo "✅ Build successful"
+      
+      # 验证文档数据
+      - name: Verify documentation data
+        run: |
+          if [ ! -f "sources/list.json" ]; then
+            echo "Documentation parsing failed: sources/list.json not found"
+            exit 1
+          fi
+          echo "✅ Documentation data generated successfully"
+          echo "📊 Links count: $(jq '.total' sources/list.json)"
+
+  # 发布作业 - 仅在版本标签时运行
+  publish:
+    name: Publish to NPM
+    runs-on: ubuntu-latest
+    needs: test
+    # 只有在 push 事件且标签匹配 v*.*.* 格式时才运行
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    
+    steps:
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      # 设置 Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org/'
+      
+      # 安装依赖
+      - name: Install dependencies
+        run: npm ci
+      
+      # 构建项目
+      - name: Build project
+        run: npm run build
+      
+      # 生成文档数据
+      - name: Parse navigation data
+        run: npm run parse-nav
+      
+      # 验证版本标签与 package.json 匹配
+      - name: Verify version tag
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          
+          echo "Tag version: $TAG_VERSION"
+          echo "Package version: $PACKAGE_VERSION"
+          
+          if [ "$TAG_VERSION" != "$PACKAGE_VERSION" ]; then
+            echo "❌ Version mismatch: tag v$TAG_VERSION != package.json v$PACKAGE_VERSION"
+            exit 1
+          fi
+          
+          echo "✅ Version tag matches package.json"
+      
+      # 发布到 NPM
+      - name: Publish to NPM
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      
+      # 创建 GitHub Release
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## 🚀 Release ${{ github.ref_name }}
+            
+            ### 📦 安装
+            ```bash
+            npx unreal-engine-docs-mcp
+            ```
+            
+            ### 🔧 MCP 配置
+            ```json
+            {
+              "mcpServers": {
+                "unreal-engine-docs": {
+                  "command": "npx",
+                  "args": ["-y", "unreal-engine-docs-mcp"]
+                }
+              }
+            }
+            ```
+            
+            ### 📋 功能
+            - 📄 获取所有虚幻引擎文档列表
+            - 🌐 支持中文文档
+            - 🚀 简单易用，无需分页
+            
+            ---
+            **完整更新日志请查看 [CHANGELOG.md](./CHANGELOG.md)**
+          draft: false
+          prerelease: false
+
+  # 状态检查作业
+  status-check:
+    name: Status Check
+    runs-on: ubuntu-latest
+    needs: [test, publish]
+    if: always()
+    
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.test.result }}" != "success" ]; then
+            echo "❌ Tests failed"
+            exit 1
+          fi
+          echo "✅ All tests passed"
+      
+      - name: Check publish results
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+        run: |
+          if [ "${{ needs.publish.result }}" != "success" ]; then
+            echo "❌ Publish failed"
+            exit 1
+          fi
+          echo "✅ Published successfully" 

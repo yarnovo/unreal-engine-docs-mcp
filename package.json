@@ -1,0 +1,47 @@
+{
+  "name": "unreal-engine-docs-mcp",
+  "version": "0.0.0",
+  "description": "MCP server for Unreal Engine documentation",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": "dist/index.js",
+  "files": [
+    "dist/**/*",
+    "sources/**/*",
+    "README.md"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "unreal-engine",
+    "documentation",
+    "ai"
+  ],
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "parse-nav": "node scripts/parse-nav.js",
+    "postversion": "git push origin --follow-tags"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^20.0.0",
+    "tsx": "^4.7.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.3"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "jsdom": "^26.1.0",
+    "zod": "^3.25.63"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
