@@ -26,7 +26,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "parse-nav": "node scripts/parse-nav.js",
-    "postversion": "git push origin --follow-tags"
+    "postversion": "git push origin --follow-tags",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
