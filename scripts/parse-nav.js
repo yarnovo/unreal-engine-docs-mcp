@@ -34,8 +34,7 @@ function parseNavigation() {
                 
                 links.push({
                     title: title,
-                    link: fullUrl,
-                    path: href
+                    link: fullUrl
                 });
             }
         });

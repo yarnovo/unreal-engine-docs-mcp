@@ -24,7 +24,7 @@ try {
 }
 
 // Load documentation links
-let docLinks: Array<{ title: string; link: string; path: string }> = [];
+let docLinks: Array<{ title: string; link: string }> = [];
 try {
   const sourcesPath = join(__dirname, "..", "sources", "list.json");
   const data = JSON.parse(readFileSync(sourcesPath, "utf-8"));
@@ -41,14 +41,28 @@ const server = new McpServer({
   version: packageVersion,
 });
 
-// Get all Unreal Engine documentation links
+// Get all Unreal Engine documentation links with optional search
 server.tool(
   "get_docs_list",
-  {},
-  async () => {
+  {
+    search: z.string().optional().describe("可选的搜索关键字，用于过滤标题和链接"),
+  },
+  async (args) => {
+    let filteredLinks = docLinks;
+    
+    // 如果提供了搜索关键字，进行过滤
+    if (args.search && args.search.trim()) {
+      const searchTerm = args.search.toLowerCase().trim();
+      filteredLinks = docLinks.filter(link => 
+        link.title.toLowerCase().includes(searchTerm) ||
+        link.link.toLowerCase().includes(searchTerm)
+      );
+    }
+    
     const result = {
-      total: docLinks.length,
-      links: docLinks,
+      total: filteredLinks.length,
+      search: args.search || null,
+      links: filteredLinks,
     };
 
     return {
