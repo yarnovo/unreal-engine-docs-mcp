@@ -110,6 +110,10 @@ server.tool(
       .string()
       .describe("可选的搜索关键字，用于模糊匹配导航标题、页面标题和页面描述"),
   },
+  {
+    readOnlyHint: true,
+    openWorldHint: false,
+  },
   async (args) => {
     let filteredLinks = enhancedDocLinks;
 
