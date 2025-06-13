@@ -20,9 +20,8 @@
     "ai"
   ],
   "scripts": {
-    "dev": "npm run build && node dist/index.js",
+    "dev": "npm run build && node dist/src/index.js",
     "build": "rimraf dist && tsc --project tsconfig.build.json",
-    "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "parse-nav": "npm run dist/scripts/parse-nav.js",
