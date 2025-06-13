@@ -278,11 +278,8 @@ const expandButtons = await page.$$('.btn-expander .icon-arrow-forward-ios:not(.
 # 搜索结果默认限制数量
 SEARCH_LIMIT_DEFAULT=10
 
-# Ollama服务地址 (可选)
+# Ollama服务地址
 OLLAMA_BASE_URL=http://localhost:11434
-
-# 嵌入模型名称 (可选)
-OLLAMA_MODEL=bge-m3
 ```
 
 ## 开发与测试
@@ -318,13 +315,6 @@ npm run dev
 ## 后续优化计划
 
 - [ ] 支持增量数据更新
-- [ ] 添加多语言版本支持  
-- [ ] 实现分布式向量搜索
-- [ ] 优化向量化处理性能
-- [ ] 添加搜索结果缓存
-- [ ] 支持自定义嵌入模型
-- [ ] 实现搜索历史分析
-- [ ] 添加API速率限制
 
 ## 贡献指南
 

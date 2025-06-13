@@ -28,7 +28,7 @@ class OllamaEmbeddingFunction {
 
   constructor(
     model: string = "bge-m3",
-    baseUrl: string = "http://localhost:11434"
+    baseUrl: string = process.env.OLLAMA_BASE_URL || "http://localhost:11434"
   ) {
     this.model = model;
     this.baseUrl = baseUrl;
