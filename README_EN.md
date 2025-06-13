@@ -6,29 +6,21 @@ This project provides an MCP (Model Context Protocol) server for Unreal Engine o
 
 ## Project Background
 
-The Unreal Engine official documentation website uses dynamically loaded navigation menus, where sub-menu items are displayed only after clicking the expand button. Traditional static HTML scraping can only capture first-level navigation links, unable to obtain the complete document structure.
+When learning Unreal Engine development, developers often need to communicate with AI large language models to get technical guidance and solutions. However, large language models are prone to hallucinations, providing inaccurate or outdated information that can mislead learners.
+
+To solve this problem, we need to provide large language models with accurate and reliable Unreal Engine official documentation indexing. Through keyword searches, large language models can directly access real links and information from Unreal Engine official documentation, thus providing more accurate technical guidance.
 
 ## Solution
 
-This project adopts a multi-layered technical approach:
-
-1. **Headless Browser Automation**: Uses Puppeteer to simulate user operations and automatically click all expandable menu items
-2. **Complete Data Collection**: Obtains complete navigation structure and scrapes title and description information for each page
-3. **Vector Semantic Search**: Builds a semantic search engine based on LanceDB and Ollama for intelligent document retrieval
+This project provides an MCP (Model Context Protocol) server specifically designed for intelligent search and indexing of Unreal Engine official documentation. To obtain complete document structure, we use dynamic data collection technology to overcome the dynamic loading limitations of the official website's navigation menus, ensuring coverage of all 2400+ documentation pages.
 
 ## Features
 
-- 🤖 **Automated Expansion**: Uses headless browser to automatically expand all menu items
-- 📊 **Data Comparison**: Compares the number of links obtained statically vs dynamically
-- 🔄 **Incremental Updates**: Multi-round expansion strategy ensures capture of all nested menus
-- 📁 **Structured Output**: Generates JSON-formatted enhanced link lists
-- 📝 **Page Information**: Automatically retrieves title and meta description for each page
-- 🔀 **Hybrid Search**: Combines keyword exact matching and vector semantic search dual strategies
-- 🎯 **Exact Matching**: Keyword exact matching based on lowercase text comparison, supports both Chinese and English, high priority
-- 🧠 **Semantic Search**: Intelligent search based on vector embeddings, supports mixed Chinese-English natural language queries
-- 🔍 **Multi-dimensional Search**: Supports full-text search based on navigation titles, page titles, and descriptions
-- ⚡ **Deduplication & Merging**: Intelligent deduplication and result merging, ensuring no duplicate links
-- 📦 **Object-structured Parameters**: Adopts object-structured parameter design, clearly separating Chinese and English search content
+- 🔍 **Intelligent Document Search**: Supports mixed Chinese-English search to quickly find relevant Unreal Engine official documentation
+- 🎯 **Exact Matching**: Keyword exact matching ensures search result accuracy
+- 🧠 **Semantic Search**: Vector embedding-based intelligent search that understands query intent
+- 📚 **Complete Documentation Coverage**: Includes 2400+ official documentation pages covering all aspects of Unreal Engine
+- 🔀 **Hybrid Search Strategy**: Combines keyword matching and semantic search for optimal search results
 
 ## How to Use in MCP Clients
 
