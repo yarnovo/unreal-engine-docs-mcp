@@ -48,34 +48,9 @@ npm install
 
 ### 构建文档数据
 
-#### 方法一：使用快捷脚本（推荐）
-
-**Windows 用户：**
-```bash
-build-docs.bat
-```
-
-**Linux/Mac 用户：**
-```bash
-chmod +x build-docs.sh
-./build-docs.sh
-```
-
-#### 方法二：使用npm脚本
+手动分步执行
 ```bash
 npm run build-docs
-```
-
-#### 方法三：手动分步执行
-```bash
-# 1. 获取动态导航
-npm run fetch-nav
-
-# 2. 解析导航数据
-npm run parse-nav
-
-# 3. 获取页面描述
-npm run fetch-descriptions
 ```
 
 ### 构建项目
