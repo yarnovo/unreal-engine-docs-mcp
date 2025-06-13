@@ -58,8 +58,8 @@ jobs:
       # 验证构建输出
       - name: Verify build output
         run: |
-          if [ ! -f "dist/index.js" ]; then
-            echo "Build failed: dist/index.js not found"
+          if [ ! -f "dist/src/index.js" ]; then
+            echo "Build failed: dist/src/index.js not found"
             exit 1
           fi
           echo "✅ Build successful"
