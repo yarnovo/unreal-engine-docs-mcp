@@ -5,8 +5,8 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "dist/index.js",
-  "bin": "dist/index.js",
+  "main": "dist/src/index.js",
+  "bin": "dist/src/index.js",
   "files": [
     "dist/**/*",
     "sources/**/*",
@@ -20,15 +20,17 @@
     "ai"
   ],
   "scripts": {
-    "dev": "tsx src/index.ts",
-    "build": "tsc",
+    "dev": "npm run build && node dist/index.js",
+    "build": "rimraf dist && tsc --project tsconfig.build.json",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:watch": "vitest",
-    "parse-nav": "node scripts/parse-nav.js",
-    "fetch-nav": "node scripts/fetch-nav.js",
-    "fetch-descriptions": "node scripts/fetch-descriptions.js",
-    "build-docs": "npm run fetch-nav && npm run parse-nav && npm run fetch-descriptions",
+    "parse-nav": "npm run dist/scripts/parse-nav.js",
+    "fetch-nav": "npm run dist/scripts/fetch-nav.js",
+    "fetch-descriptions": "npm run dist/scripts/fetch-descriptions.js",
+    "merge-data": "npm run dist/scripts/merge-data.js",
+    "build-docs": "npm run fetch-nav && npm run parse-nav && npm run fetch-descriptions && npm run merge-data",
+    "build-vector-db": "node dist/scripts/build-vector-db.js",
     "install-browsers": "npx playwright install chromium",
     "postversion": "git push origin --follow-tags",
     "prepublishOnly": "npm run build"
@@ -40,12 +42,15 @@
     "jsdom": "^26.1.0",
     "playwright": "^1.53.0",
     "puppeteer": "^22.0.0",
+    "rimraf": "^6.0.1",
     "tsx": "^4.7.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.3"
   },
   "dependencies": {
+    "@lancedb/lancedb": "^0.20.0",
     "@modelcontextprotocol/sdk": "^1.12.1",
+    "apache-arrow": "^16.1.0",
     "zod": "^3.25.63"
   },
   "engines": {
