@@ -95,7 +95,9 @@ async function simulateHumanBehavior(page: Page): Promise<void> {
       const x = Math.floor(Math.random() * viewport.width);
       const y = Math.floor(Math.random() * viewport.height);
 
-      await page.mouse.move(x, y, { steps: Math.floor(Math.random() * 10) + 5 });
+      await page.mouse.move(x, y, {
+        steps: Math.floor(Math.random() * 10) + 5,
+      });
 
       // 随机滚动
       if (Math.random() > 0.5) {
@@ -114,9 +116,14 @@ async function simulateHumanBehavior(page: Page): Promise<void> {
 }
 
 // 处理单个页面的函数
-async function processSinglePage(page: Page, linkInfo: LinkInfo, index: number, total: number): Promise<PageResult> {
+async function processSinglePage(
+  page: Page,
+  linkInfo: LinkInfo,
+  index: number,
+  total: number
+): Promise<PageResult> {
   const url = linkInfo.link;
-  
+
   try {
     console.log(`   [${index}/${total}] 🔗 处理: ${linkInfo.title}`);
     console.log(`   链接: ${url}`);
@@ -136,9 +143,7 @@ async function processSinglePage(page: Page, linkInfo: LinkInfo, index: number, 
     console.log(`   [${index}] 📊 响应状态: ${response?.status()}`);
 
     if (!response || !response.ok()) {
-      throw new Error(
-        `HTTP ${response?.status()}: ${response?.statusText()}`
-      );
+      throw new Error(`HTTP ${response?.status()}: ${response?.statusText()}`);
     }
 
     // 等待页面加载并模拟人类行为
@@ -225,9 +230,8 @@ async function processSinglePage(page: Page, linkInfo: LinkInfo, index: number, 
       data: {
         title: pageInfo.title || "",
         description: pageInfo.description || "",
-      }
+      },
     };
-
   } catch (error) {
     console.log(`   [${index}] ❌ 处理失败: ${(error as Error).message}`);
 
@@ -237,7 +241,7 @@ async function processSinglePage(page: Page, linkInfo: LinkInfo, index: number, 
       data: {
         title: "",
         description: "",
-      }
+      },
     };
   }
 }
@@ -249,7 +253,13 @@ async function fetchDescriptions(): Promise<void> {
   try {
     // 读取 list.json 文件
     console.log("📋 读取链接列表...");
-    const sourcesPath = path.join(__dirname, "..", "sources", "list.json");
+    const sourcesPath = path.join(
+      __dirname,
+      "..",
+      "..",
+      "sources",
+      "list.json"
+    );
     const listData: ListData = JSON.parse(readFileSync(sourcesPath, "utf-8"));
     const links = listData.links || [];
 
@@ -291,15 +301,19 @@ async function fetchDescriptions(): Promise<void> {
 
     // 按批次处理链接
     const totalBatches = Math.ceil(links.length / BATCH_SIZE);
-    
+
     for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
       const startIndex = batchIndex * BATCH_SIZE;
       const endIndex = Math.min(startIndex + BATCH_SIZE, links.length);
       const batch = links.slice(startIndex, endIndex);
       const currentBatch = batchIndex + 1;
 
-      console.log(`\n🚀 开始处理第 ${currentBatch}/${totalBatches} 批 (${batch.length} 个页面)`);
-      console.log(`📍 处理范围: ${startIndex + 1}-${endIndex} / ${links.length}`);
+      console.log(
+        `\n🚀 开始处理第 ${currentBatch}/${totalBatches} 批 (${batch.length} 个页面)`
+      );
+      console.log(
+        `📍 处理范围: ${startIndex + 1}-${endIndex} / ${links.length}`
+      );
 
       // 批量间的随机延迟，模拟用户行为
       if (batchIndex > 0) {
@@ -311,9 +325,15 @@ async function fetchDescriptions(): Promise<void> {
       // 为当前批次生成随机浏览器标识
       const fingerprint = generateRandomBrowserFingerprint();
       console.log(`🎭 当前批次浏览器标识:`);
-      console.log(`   User-Agent: ${fingerprint.userAgent.substring(0, 80)}...`);
-      console.log(`   视口: ${fingerprint.viewport.width}x${fingerprint.viewport.height}`);
-      console.log(`   语言: ${fingerprint.locale}, 时区: ${fingerprint.timezoneId}`);
+      console.log(
+        `   User-Agent: ${fingerprint.userAgent.substring(0, 80)}...`
+      );
+      console.log(
+        `   视口: ${fingerprint.viewport.width}x${fingerprint.viewport.height}`
+      );
+      console.log(
+        `   语言: ${fingerprint.locale}, 时区: ${fingerprint.timezoneId}`
+      );
 
       // 创建新的浏览器上下文，使用随机标识
       const context = await browser.newContext({
@@ -345,7 +365,9 @@ async function fetchDescriptions(): Promise<void> {
         const linkInfo = batch[i];
         const pageIndex = startIndex + i + 1;
 
-        console.log(`   📖 创建第 ${i + 1}/${batch.length} 个标签页 (总第${pageIndex}页)`);
+        console.log(
+          `   📖 创建第 ${i + 1}/${batch.length} 个标签页 (总第${pageIndex}页)`
+        );
 
         // 创建新页面
         const page = await context.newPage();
@@ -362,7 +384,12 @@ async function fetchDescriptions(): Promise<void> {
         });
 
         // 启动页面处理任务（但不等待完成）
-        const pagePromise = processSinglePage(page, linkInfo, pageIndex, links.length);
+        const pagePromise = processSinglePage(
+          page,
+          linkInfo,
+          pageIndex,
+          links.length
+        );
         pagePromises.push(pagePromise);
 
         // 模拟用户打开tab间的延迟（除了最后一个）
@@ -374,7 +401,7 @@ async function fetchDescriptions(): Promise<void> {
       }
 
       console.log(`⚡ 所有标签页已创建，等待处理完成...`);
-      
+
       // 等待当前批次的所有页面处理完成
       const batchResults = await Promise.allSettled(pagePromises);
 
@@ -394,11 +421,11 @@ async function fetchDescriptions(): Promise<void> {
       // 处理结果
       batchResults.forEach((result, index) => {
         processedCount++;
-        
-        if (result.status === 'fulfilled') {
+
+        if (result.status === "fulfilled") {
           const pageResult = result.value;
           pageData[pageResult.url] = pageResult.data;
-          
+
           if (pageResult.success) {
             successCount++;
           } else {
@@ -412,22 +439,46 @@ async function fetchDescriptions(): Promise<void> {
             title: "",
             description: "",
           };
-          console.log(`   [${startIndex + index + 1}] ❌ Promise 执行失败: ${result.reason}`);
+          console.log(
+            `   [${startIndex + index + 1}] ❌ Promise 执行失败: ${
+              result.reason
+            }`
+          );
         }
       });
 
       console.log(`✅ 第 ${currentBatch} 批处理完成`);
-      console.log(`   📊 本批成功: ${batchResults.filter(r => r.status === 'fulfilled' && r.value.success).length}`);
-      console.log(`   📊 本批失败: ${batchResults.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && !r.value.success)).length}`);
-      
+      console.log(
+        `   📊 本批成功: ${
+          batchResults.filter(
+            (r) => r.status === "fulfilled" && r.value.success
+          ).length
+        }`
+      );
+      console.log(
+        `   📊 本批失败: ${
+          batchResults.filter(
+            (r) =>
+              r.status === "rejected" ||
+              (r.status === "fulfilled" && !r.value.success)
+          ).length
+        }`
+      );
+
       // 显示总体进度
-      console.log(`📈 总体进度: ${processedCount}/${links.length} (${(processedCount/links.length*100).toFixed(1)}%)`);
+      console.log(
+        `📈 总体进度: ${processedCount}/${links.length} (${(
+          (processedCount / links.length) *
+          100
+        ).toFixed(1)}%)`
+      );
       console.log(`   累计成功: ${successCount}, 累计失败: ${failedCount}`);
     }
 
     // 保存页面信息到文件
     const outputPath = path.join(
       __dirname,
+      "..",
       "..",
       "sources",
       "descriptions.json"
@@ -448,11 +499,7 @@ async function fetchDescriptions(): Promise<void> {
       pages: pageData,
     };
 
-    writeFileSync(
-      outputPath,
-      JSON.stringify(pageDataOutput, null, 2),
-      "utf-8"
-    );
+    writeFileSync(outputPath, JSON.stringify(pageDataOutput, null, 2), "utf-8");
 
     console.log(`\n🎉 全部处理完成!`);
     console.log(`📁 输出文件: ${outputPath}`);
@@ -461,9 +508,7 @@ async function fetchDescriptions(): Promise<void> {
     console.log(`   - 成功获取信息: ${successCount}`);
     console.log(`   - 获取失败: ${failedCount}`);
     console.log(
-      `   - 有标题: ${
-        Object.values(pageData).filter((d) => d.title).length
-      }`
+      `   - 有标题: ${Object.values(pageData).filter((d) => d.title).length}`
     );
     console.log(
       `   - 有描述: ${
@@ -500,4 +545,4 @@ async function fetchDescriptions(): Promise<void> {
   }
 }
 
-fetchDescriptions(); 
+fetchDescriptions();

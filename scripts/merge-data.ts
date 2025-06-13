@@ -67,6 +67,7 @@ async function mergeData(): Promise<void> {
     const descriptionsPath = join(
       __dirname,
       "..",
+      "..",
       "sources",
       "descriptions.json"
     );
@@ -123,7 +124,13 @@ async function mergeData(): Promise<void> {
     };
 
     // 写入合并后的数据
-    const outputPath = join(__dirname, "..", "sources", "enhanced-list.json");
+    const outputPath = join(
+      __dirname,
+      "..",
+      "..",
+      "sources",
+      "enhanced-list.json"
+    );
     writeFileSync(outputPath, JSON.stringify(outputData, null, 2), "utf-8");
 
     console.log("✅ 数据合并完成！");
@@ -143,4 +150,4 @@ async function mergeData(): Promise<void> {
 }
 
 // 执行合并
-mergeData().catch(console.error); 
+mergeData().catch(console.error);
