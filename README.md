@@ -1,6 +1,6 @@
-# 虚幻引擎文档导航解析器
+# 虚幻引擎文档 MCP 服务器
 
-这个项目用于动态获取和解析虚幻引擎官方文档的完整导航结构，并提供基于关键字的搜索功能。
+这个项目提供虚幻引擎官方文档的 MCP（Model Context Protocol）服务器，支持智能搜索和文档访问功能。
 
 ## 项目背景
 
@@ -8,7 +8,7 @@
 
 ## 解决方案
 
-本项目使用无头浏览器(Puppeteer)来模拟用户操作，自动点击所有可展开的菜单项，获取完整的导航结构。
+本项目使用无头浏览器(Puppeteer)来模拟用户操作，自动点击所有可展开的菜单项，获取完整的导航结构，并抓取每个页面的描述信息。
 
 ## 功能特性
 
@@ -16,21 +16,27 @@
 - 📊 **数据对比**: 对比静态和动态获取的链接数量
 - 🔄 **增量更新**: 多轮展开策略确保获取所有嵌套菜单
 - 📁 **结构化输出**: 生成JSON格式的链接列表
-- 🔍 **关键字搜索**: 支持基于标题和链接的关键字搜索功能
+- 📝 **页面描述**: 自动获取每个页面的meta description
+- 🔍 **智能搜索**: 支持基于标题、链接和描述的全文搜索功能
 
 ## 文件结构
 
 ```
 ├── scripts/
-│   ├── fetch-nav.js     # 动态获取导航结构
-│   └── parse-nav.js     # 解析HTML并生成JSON
+│   ├── fetch-nav.js         # 动态获取导航结构
+│   ├── parse-nav.js         # 解析HTML并生成JSON
+│   └── fetch-descriptions.js # 获取页面描述信息
 ├── sources/
-│   └── list.json        # 生成的链接列表
+│   ├── list.json            # 生成的链接列表
+│   └── descriptions.json    # 页面描述数据
 ├── src/
-│   └── index.ts         # MCP服务器实现
-├── nav.html             # 原始静态导航(87个链接)
-├── nav-dist.html        # 动态获取的完整导航(2415个链接)
-└── package.json         # 项目配置
+│   └── index.ts             # MCP服务器实现
+├── dist/                    # 编译后的JavaScript文件
+├── build-docs.sh            # Linux/Mac构建脚本
+├── build-docs.bat           # Windows构建脚本
+├── nav.html                 # 原始静态导航(87个链接)
+├── nav-dist.html            # 动态获取的完整导航(2415个链接)
+└── package.json             # 项目配置
 ```
 
 ## 使用方法
@@ -40,20 +46,40 @@
 npm install
 ```
 
-### 获取动态导航
+### 构建文档数据
+
+#### 方法一：使用快捷脚本（推荐）
+
+**Windows 用户：**
 ```bash
+build-docs.bat
+```
+
+**Linux/Mac 用户：**
+```bash
+chmod +x build-docs.sh
+./build-docs.sh
+```
+
+#### 方法二：使用npm脚本
+```bash
+npm run build-docs
+```
+
+#### 方法三：手动分步执行
+```bash
+# 1. 获取动态导航
 npm run fetch-nav
-```
 
-### 解析导航数据
-```bash
+# 2. 解析导航数据
 npm run parse-nav
+
+# 3. 获取页面描述
+npm run fetch-descriptions
 ```
 
-### 完整流程
+### 构建项目
 ```bash
-npm test
-# 或
 npm run build
 ```
 
@@ -66,10 +92,10 @@ npm run dev
 
 ### get_docs_list
 
-获取虚幻引擎文档链接列表，支持可选的关键字搜索功能。
+获取虚幻引擎文档链接列表，支持可选的智能搜索功能。
 
 **参数:**
-- `search` (可选): 搜索关键字，用于过滤标题和链接
+- `search` (可选): 搜索关键字，用于过滤标题、链接和描述
 
 **返回数据格式:**
 ```json
@@ -79,7 +105,8 @@ npm run dev
   "links": [
     {
       "title": "物体和角色动画制作",
-      "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/animating-characters-and-objects-in-unreal-engine"
+      "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/animating-characters-and-objects-in-unreal-engine",
+      "description": "学习如何在虚幻引擎中创建和管理角色与物体的动画系统。"
     }
   ]
 }
@@ -89,6 +116,8 @@ npm run dev
 - 获取所有链接: `get_docs_list()`
 - 搜索动画相关: `get_docs_list(search="动画")`
 - 搜索蓝图相关: `get_docs_list(search="blueprint")`
+- 搜索安装教程: `get_docs_list(search="安装")`
+- 基于描述搜索: `get_docs_list(search="新功能")`
 
 ## 成果统计
 
@@ -110,12 +139,16 @@ const expandButtons = await page.$$('.btn-expander .icon-arrow-forward-ios:not(.
 ```
 
 ### 搜索实现
-搜索功能基于标题和链接字段进行大小写不敏感的关键字匹配：
+搜索功能基于标题、链接和描述字段进行大小写不敏感的全文搜索：
 ```typescript
-filteredLinks = docLinks.filter(link => 
-  link.title.toLowerCase().includes(searchTerm) ||
-  link.link.toLowerCase().includes(searchTerm)
-);
+filteredLinks = docLinks.filter(link => {
+  const description = docDescriptions[link.link] || '';
+  return (
+    link.title.toLowerCase().includes(searchTerm) ||
+    link.link.toLowerCase().includes(searchTerm) ||
+    description.toLowerCase().includes(searchTerm)
+  );
+});
 ```
 
 ### 错误处理
@@ -126,6 +159,7 @@ filteredLinks = docLinks.filter(link =>
 
 ## 生成的数据格式
 
+### list.json - 链接列表
 ```json
 {
   "total": 2415,
@@ -136,6 +170,20 @@ filteredLinks = docLinks.filter(link =>
       "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/whats-new"
     }
   ]
+}
+```
+
+### descriptions.json - 页面描述
+```json
+{
+  "total": 2415,
+  "generated": "2025-06-12T18:45:30.123Z",
+  "success_count": 2380,
+  "failed_count": 35,
+  "descriptions": {
+    "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/whats-new": "了解虚幻引擎5.6的新功能和改进。",
+    "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/install-unreal-engine": "学习如何下载和安装虚幻引擎到您的计算机上。"
+  }
 }
 ```
 

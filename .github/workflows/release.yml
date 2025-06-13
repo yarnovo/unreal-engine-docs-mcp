@@ -55,10 +55,6 @@ jobs:
       - name: Build project
         run: npm run build
       
-      # 生成文档数据
-      - name: Parse navigation data
-        run: npm run parse-nav
-      
       # 验证构建输出
       - name: Verify build output
         run: |
@@ -67,16 +63,6 @@ jobs:
             exit 1
           fi
           echo "✅ Build successful"
-      
-      # 验证文档数据
-      - name: Verify documentation data
-        run: |
-          if [ ! -f "sources/list.json" ]; then
-            echo "Documentation parsing failed: sources/list.json not found"
-            exit 1
-          fi
-          echo "✅ Documentation data generated successfully"
-          echo "📊 Links count: $(jq '.total' sources/list.json)"
 
   # 发布作业 - 仅在版本标签时运行
   publish:
@@ -106,10 +92,6 @@ jobs:
       # 构建项目
       - name: Build project
         run: npm run build
-      
-      # 生成文档数据
-      - name: Parse navigation data
-        run: npm run parse-nav
       
       # 验证版本标签与 package.json 匹配
       - name: Verify version tag

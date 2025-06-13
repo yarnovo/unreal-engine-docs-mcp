@@ -27,6 +27,9 @@
     "test:watch": "vitest",
     "parse-nav": "node scripts/parse-nav.js",
     "fetch-nav": "node scripts/fetch-nav.js",
+    "fetch-descriptions": "node scripts/fetch-descriptions.js",
+    "build-docs": "npm run fetch-nav && npm run parse-nav && npm run fetch-descriptions",
+    "install-browsers": "npx playwright install chromium",
     "postversion": "git push origin --follow-tags",
     "prepublishOnly": "npm run build"
   },
@@ -41,8 +44,9 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
     "jsdom": "^26.1.0",
-    "zod": "^3.25.63",
-    "puppeteer": "^22.0.0"
+    "playwright": "^1.53.0",
+    "puppeteer": "^22.0.0",
+    "zod": "^3.25.63"
   },
   "engines": {
     "node": ">=18.0.0"
