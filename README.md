@@ -21,8 +21,12 @@
 - 🔄 **增量更新**: 多轮展开策略确保获取所有嵌套菜单
 - 📁 **结构化输出**: 生成JSON格式的增强链接列表
 - 📝 **页面信息**: 自动获取每个页面的标题和meta description
-- 🧠 **语义搜索**: 基于向量嵌入的智能搜索，支持自然语言查询
+- 🔀 **混合搜索**: 结合关键词精确匹配和向量语义搜索的双重搜索策略
+- 🎯 **精确匹配**: 基于小写文本比对的关键词精确匹配，同时支持中英文，优先级高
+- 🧠 **语义搜索**: 基于向量嵌入的智能搜索，支持中英文混合自然语言查询
 - 🔍 **多维度搜索**: 支持基于导航标题、页面标题和描述的全文搜索
+- ⚡ **去重合并**: 智能去重和结果合并，确保无重复链接
+- 📦 **对象化参数**: 采用对象结构的参数设计，清晰分离中英文搜索内容
 
 ## 文件结构
 
@@ -123,20 +127,38 @@ npm start
 
 ### search_docs_list
 
-查询并返回虚幻引擎官方文档链接列表，支持**向量语义搜索**技术。
+查询并返回虚幻引擎官方文档链接列表，支持**混合搜索**技术，结合向量语义搜索和关键词精确匹配。
 
 **参数:**
-- `search` (必需): 搜索关键字，支持自然语言查询
-- `limit` (可选): 返回结果的最大数量，默认10个
+- `search` (必需): 语义搜索关键字对象，包含英文和中文字段，使用向量语义搜索技术
+  - `en` (必需): 英文语义搜索关键字
+  - `cn` (必需): 中文语义搜索关键字
+- `keyword` (必需): 精确匹配关键词对象，包含英文和中文字段，通过文本小写比对进行精确匹配，优先级高于语义搜索
+  - `en` (必需): 英文精确匹配关键词
+  - `cn` (必需): 中文精确匹配关键词
+- `semanticLimit` (可选): 语义搜索返回结果的最大数量，默认5个
+- `keywordLimit` (可选): 关键词精确匹配返回结果的最大数量，默认5个
 
 **返回数据格式:**
 ```json
 {
   "total": 2415,
-  "search": "角色动画制作",
-  "searchMethod": "semantic_search",
-  "limit": 1,
+  "search": {
+    "en": "animation",
+    "cn": "角色动画制作"
+  },
+  "keyword": {
+    "en": "blueprint",
+    "cn": "蓝图"
+  },
+  "combinedSearchTerm": "animation 角色动画制作",
+  "searchMethod": "hybrid_search",
+  "semanticLimit": 5,
+  "keywordLimit": 5,
+  "keywordResultCount": 3,
+  "semanticResultCount": 2,
   "vectorSearchAvailable": true,
+  "error": null,
   "links": [
     {
       "navTitle": "物体和角色动画制作",
@@ -149,16 +171,16 @@ npm start
 ```
 
 **搜索模式说明:**
-- `semantic_search`: 向量语义搜索 (推荐)
-- `semantic_search_unavailable`: 向量搜索不可用
-- `semantic_search_failed`: 向量搜索失败
-- `no_search`: 未提供搜索关键字
+- `hybrid_search`: 混合搜索 (关键词精确匹配 + 向量语义搜索)
+- `hybrid_search_partial`: 部分混合搜索 (仅关键词匹配，向量搜索不可用或失败)
+- `error`: 搜索执行失败
 
 **使用示例:**
-- 语义搜索动画: `search_docs_list(search="如何制作角色动画")`
-- 搜索蓝图功能: `search_docs_list(search="蓝图编程教程")`
-- 查找安装指南: `search_docs_list(search="安装虚幻引擎")`
-- 新功能探索: `search_docs_list(search="最新功能和更新")`
+- 混合搜索动画: `search_docs_list(search={en:"animation", cn:"角色动画"}, keyword={en:"blueprint", cn:"蓝图"})`
+- 搜索蓝图材质: `search_docs_list(search={en:"blueprint", cn:"蓝图编程"}, keyword={en:"material", cn:"材质"})`
+- 查找安装指南: `search_docs_list(search={en:"installation", cn:"安装虚幻引擎"}, keyword={en:"guide", cn:"指南"})`
+- 物理碰撞搜索: `search_docs_list(search={en:"physics", cn:"物理仿真"}, keyword={en:"collision", cn:"碰撞"})`
+- 光照阴影功能: `search_docs_list(search={en:"lighting", cn:"光照设置"}, keyword={en:"shadow", cn:"阴影"})`
 
 ## 数据统计
 
@@ -184,13 +206,30 @@ npm start
 - **Ollama**: 本地嵌入模型服务
 - **bge-m3**: 多语言嵌入模型，支持中英文混合查询
 
-### 搜索工作流程
+### 混合搜索工作流程
 
-1. **文本预处理**: 合并导航标题、页面标题和描述
-2. **向量化**: 使用 bge-m3 模型生成文档嵌入向量
-3. **存储**: 将向量存储到 LanceDB 中
-4. **查询**: 将用户查询转换为向量并执行相似度搜索
-5. **排序**: 基于相似度分数返回最相关结果
+1. **参数解析**: 
+   - 接收对象化的 `search` 和 `keyword` 参数
+   - 分别提取英文 (`en`) 和中文 (`cn`) 字段内容
+
+2. **关键词精确匹配**: 
+   - 将英文和中文关键词转换为小写
+   - 在导航标题、页面标题、页面描述中进行文本包含匹配
+   - 同时匹配英文和中文关键词，扩大匹配范围
+   - 返回指定数量的匹配结果
+
+3. **向量语义搜索**:
+   - 合并英文和中文搜索词为单一查询 (`search.cn + " " + search.en`)
+   - 将合并查询转换为向量嵌入
+   - 在 LanceDB 中执行相似度搜索
+   - 返回语义最相关的结果
+
+4. **结果合并与去重**:
+   - 优先添加关键词匹配结果 (优先级高)
+   - 添加语义搜索结果 (基于 link 字段去重)
+   - 确保无重复链接，保持结果质量
+
+5. **智能降级**: 如果向量搜索不可用，仍可提供关键词匹配结果
 
 ### 自动化展开策略
 
@@ -275,8 +314,11 @@ const expandButtons = await page.$$('.btn-expander .icon-arrow-forward-ios:not(.
 ## 环境变量
 
 ```bash
-# 搜索结果默认限制数量
-SEARCH_LIMIT_DEFAULT=10
+# 语义搜索默认限制数量
+SEMANTIC_SEARCH_LIMIT_DEFAULT=5
+
+# 关键词精确匹配默认限制数量
+KEYWORD_SEARCH_LIMIT_DEFAULT=5
 
 # Ollama服务地址
 OLLAMA_BASE_URL=http://localhost:11434
