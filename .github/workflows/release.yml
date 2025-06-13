@@ -47,14 +47,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
-      # 运行测试
-      - name: Run tests
-        run: npm test
-      
       # 构建项目
       - name: Build project
         run: npm run build
-      
+
+      # 运行测试
+      - name: Run tests
+        run: npm test
+
       # 验证构建输出
       - name: Verify build output
         run: |

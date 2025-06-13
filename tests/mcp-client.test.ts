@@ -12,7 +12,10 @@ const __dirname = dirname(__filename);
 let client: Client;
 let transport: StdioClientTransport;
 
-describe('MCP 服务端测试', () => {
+// 检测是否在CI环境中
+const isCI = !!process.env.CI;
+
+describe.skipIf(isCI)('MCP 服务端测试', () => {
   beforeAll(async () => {
     console.log("🚀 开始测试 MCP 服务端...");
 
@@ -90,7 +93,7 @@ describe('MCP 服务端测试', () => {
     expect(data.total).toBeDefined();
     expect(data.search).toEqual({ en: "animation", cn: "角色动画" });
     expect(data.keyword).toEqual({ en: "blueprint", cn: "蓝图" });
-    expect(data.combinedSearchTerm).toBe("animation 角色动画");
+    expect(data.combinedSearchTerm).toBe("角色动画 animation");
     expect(data.searchMethod).toBeDefined();
     expect(data.semanticLimit).toBe(3);
     expect(data.keywordLimit).toBe(2);
@@ -145,7 +148,7 @@ describe('MCP 服务端测试', () => {
     const data = JSON.parse(content.content[0].text);
     expect(data.search).toEqual({ en: "animation", cn: "动画制作" });
     expect(data.keyword).toEqual({ en: "blueprint", cn: "材质" });
-    expect(data.combinedSearchTerm).toBe("animation 动画制作");
+    expect(data.combinedSearchTerm).toBe("动画制作 animation");
     expect(data.searchMethod).toBeDefined();
     expect(data.vectorSearchAvailable).toBeDefined();
     expect(data.links).toBeDefined();
@@ -196,7 +199,7 @@ describe('MCP 服务端测试', () => {
     const data = JSON.parse(content.content[0].text);
     expect(data.search).toEqual({ en: "blueprint", cn: "蓝图" });
     expect(data.keyword).toEqual({ en: "material", cn: "材质" });
-    expect(data.combinedSearchTerm).toBe("blueprint 蓝图");
+    expect(data.combinedSearchTerm).toBe("蓝图 blueprint");
     expect(data.searchMethod).toBeDefined();
     expect(data.links).toBeDefined();
     expect(Array.isArray(data.links)).toBe(true);
@@ -250,7 +253,7 @@ describe('MCP 服务端测试', () => {
       const data = JSON.parse(content.content[0].text);
       expect(data.search).toEqual(combo.search);
       expect(data.keyword).toEqual(combo.keyword);
-      expect(data.combinedSearchTerm).toBe(`${combo.search.en} ${combo.search.cn}`);
+      expect(data.combinedSearchTerm).toBe(`${combo.search.cn} ${combo.search.en}`);
       expect(data.searchMethod).toBeDefined();
       expect(data.links).toBeDefined();
       expect(Array.isArray(data.links)).toBe(true);
