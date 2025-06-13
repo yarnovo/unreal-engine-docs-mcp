@@ -82,12 +82,16 @@ console.log(
   process.env.SEMANTIC_SEARCH_LIMIT_DEFAULT
 );
 console.log(
-  "process.env.KEYWORD_SEARCH_LIMIT_DEFAULT", 
+  "process.env.KEYWORD_SEARCH_LIMIT_DEFAULT",
   process.env.KEYWORD_SEARCH_LIMIT_DEFAULT
 );
 
-const semanticSearchLimitDefault = parseInt(process.env.SEMANTIC_SEARCH_LIMIT_DEFAULT || "5");
-const keywordSearchLimitDefault = parseInt(process.env.KEYWORD_SEARCH_LIMIT_DEFAULT || "5");
+const semanticSearchLimitDefault = parseInt(
+  process.env.SEMANTIC_SEARCH_LIMIT_DEFAULT || "10"
+);
+const keywordSearchLimitDefault = parseInt(
+  process.env.KEYWORD_SEARCH_LIMIT_DEFAULT || "10"
+);
 
 console.log("semanticSearchLimitDefault", semanticSearchLimitDefault);
 console.log("keywordSearchLimitDefault", keywordSearchLimitDefault);
@@ -102,13 +106,17 @@ server.tool(
         en: z.string().describe("英文语义搜索关键字"),
         cn: z.string().describe("中文语义搜索关键字"),
       })
-      .describe("语义搜索关键字对象，包含英文和中文，将使用向量语义搜索技术返回最相关的结果"),
+      .describe(
+        "语义搜索关键字对象，包含英文和中文，将使用向量语义搜索技术返回最相关的结果"
+      ),
     keyword: z
       .object({
         en: z.string().describe("英文精确匹配关键词"),
         cn: z.string().describe("中文精确匹配关键词"),
       })
-      .describe("精确匹配关键词对象，包含英文和中文，将通过文本小写比对进行精确匹配，返回结果排序优先级高于语义搜索"),
+      .describe(
+        "精确匹配关键词对象，包含英文和中文，将通过文本小写比对进行精确匹配，返回结果排序优先级高于语义搜索"
+      ),
     semanticLimit: z
       .number()
       .optional()
@@ -134,25 +142,32 @@ server.tool(
       // 关键词精确匹配 (英文+中文)
       const keywordTerm = args.keyword.en.toLowerCase();
       const keywordCnTerm = args.keyword.cn.toLowerCase();
-      console.log(`🔍 执行关键词精确匹配: "${keywordTerm}" + "${keywordCnTerm}"`);
-      
-      keywordResults = enhancedDocLinks.filter((link) => {
-        const searchFields = [
-          link.navTitle?.toLowerCase() || "",
-          link.pageTitle?.toLowerCase() || "",
-          link.pageDescription?.toLowerCase() || "",
-        ];
-        // 同时匹配英文关键词和中文关键词
-        return searchFields.some(field => 
-          field.includes(keywordTerm) || field.includes(keywordCnTerm)
-        );
-      }).slice(0, args.keywordLimit);
-      
+      console.log(
+        `🔍 执行关键词精确匹配: "${keywordTerm}" + "${keywordCnTerm}"`
+      );
+
+      keywordResults = enhancedDocLinks
+        .filter((link) => {
+          const searchFields = [
+            link.navTitle?.toLowerCase() || "",
+            link.pageTitle?.toLowerCase() || "",
+            link.pageDescription?.toLowerCase() || "",
+          ];
+          // 同时匹配英文关键词和中文关键词
+          return searchFields.some(
+            (field) =>
+              field.includes(keywordTerm) || field.includes(keywordCnTerm)
+          );
+        })
+        .slice(0, args.keywordLimit);
+
       console.log(`✅ 关键词匹配找到 ${keywordResults.length} 个结果`);
 
       // 语义搜索 (英文+中文合并)
       const combinedSearchTerm = `${args.search.cn} ${args.search.en}`;
-      console.log(`🔍 执行语义搜索: "${args.search.cn}" + "${args.search.en}" -> "${combinedSearchTerm}"`);
+      console.log(
+        `🔍 执行语义搜索: "${args.search.cn}" + "${args.search.en}" -> "${combinedSearchTerm}"`
+      );
 
       // 检查向量搜索是否可用
       try {
@@ -177,28 +192,33 @@ server.tool(
         } else {
           console.log("⚠️ 向量搜索不可用");
           searchMethod = "hybrid_search_partial";
-          errorMessage = "向量搜索服务不可用，请检查 Ollama 服务是否运行或向量数据库是否存在";
+          errorMessage =
+            "向量搜索服务不可用，请检查 Ollama 服务是否运行或向量数据库是否存在";
         }
       } catch (searchError) {
         console.log("⚠️ 向量搜索失败:", searchError);
         searchMethod = "hybrid_search_partial";
-        errorMessage = `向量搜索失败: ${searchError instanceof Error ? searchError.message : String(searchError)}`;
+        errorMessage = `向量搜索失败: ${
+          searchError instanceof Error
+            ? searchError.message
+            : String(searchError)
+        }`;
       }
 
       // 合并结果并去重（以link为准）
       const linkSet = new Set<string>();
       let filteredLinks: EnhancedLink[] = [];
-      
+
       // 先添加关键词匹配结果（优先级更高）
-      keywordResults.forEach(link => {
+      keywordResults.forEach((link) => {
         if (!linkSet.has(link.link)) {
           linkSet.add(link.link);
           filteredLinks.push(link);
         }
       });
-      
+
       // 再添加语义搜索结果
-      semanticResults.forEach(link => {
+      semanticResults.forEach((link) => {
         if (!linkSet.has(link.link)) {
           linkSet.add(link.link);
           filteredLinks.push(link);
@@ -244,7 +264,7 @@ server.tool(
     } catch (error) {
       // 全局错误处理，确保返回一致的数据结构
       console.error("❌ 搜索工具执行失败:", error);
-      
+
       const errorResult = {
         total: enhancedDocLinks.length,
         search: args.search,
@@ -256,7 +276,9 @@ server.tool(
         keywordResultCount: 0,
         semanticResultCount: 0,
         vectorSearchAvailable: false,
-        error: `搜索执行失败: ${error instanceof Error ? error.message : String(error)}`,
+        error: `搜索执行失败: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
         links: [],
       };
 
