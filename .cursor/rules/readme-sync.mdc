@@ -1,0 +1,53 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# README Documentation Sync Rule
+
+## Purpose
+This rule ensures that changes to [README.md](mdc:README.md) are synchronized with [README_EN.md](mdc:README_EN.md) to maintain semantic consistency between Chinese and English documentation.
+
+## Key Files
+- **Primary Documentation**: [README.md](mdc:README.md) (Chinese)
+- **Secondary Documentation**: [README_EN.md](mdc:README_EN.md) (English)
+
+## Synchronization Requirements
+
+### When README.md is Modified
+1. **Identify Changes**: Compare the modified sections in the Chinese version
+2. **Semantic Translation**: Update corresponding sections in the English version
+3. **Maintain Structure**: Keep the same document structure and formatting
+4. **Preserve Technical Terms**: Keep technical terms, environment variables, and code examples consistent
+
+### Critical Sections to Sync
+- **Environment Variables**: Any changes to environment variable names, defaults, or descriptions
+- **Parameters**: Function/tool parameter modifications
+- **Return Data Formats**: JSON structure changes
+- **Usage Examples**: New examples or parameter changes
+- **Configuration**: Installation, setup, or configuration changes
+
+### Consistency Rules
+- Environment variable names must be identical in both versions
+- Code examples must be identical (including JSON structures)
+- Version numbers and technical specifications must match
+- Links and file paths must be identical
+
+### Translation Guidelines
+- Keep Chinese examples in both versions for context
+- Translate descriptions and explanations naturally
+- Maintain professional technical writing tone
+- Preserve markdown formatting and structure
+
+## Validation Checklist
+- [ ] Environment variables match exactly
+- [ ] Parameter lists are synchronized
+- [ ] Code examples are identical
+- [ ] Return data formats match
+- [ ] Usage examples reflect same functionality
+- [ ] Version information is consistent
+- [ ] Links and references are preserved
+
+## Auto-sync Command Pattern
+When making changes to README.md, always follow up with corresponding updates to README_EN.md using the same technical changes but with appropriate English translations.
+

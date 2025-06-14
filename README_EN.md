@@ -73,11 +73,14 @@ Query and return Unreal Engine official documentation link lists, supporting **h
 - `search` (required): Semantic search keyword object containing English and Chinese fields, using vector semantic search technology
   - `en` (required): English semantic search keywords
   - `cn` (required): Chinese semantic search keywords
-- `keyword` (required): Exact match keyword object containing English and Chinese fields, performs exact matching through lowercase text comparison, higher priority than semantic search
-  - `en` (required): English exact match keywords
-  - `cn` (required): Chinese exact match keywords
-- `semanticLimit` (optional): Maximum number of semantic search results, default 5
-- `keywordLimit` (optional): Maximum number of keyword exact match results, default 5
+- `keyword` (required): Exact match keyword array, each element contains English and Chinese fields, performs exact matching through lowercase text comparison, **sorted by array order with higher priority** (results matching earlier keywords appear first), higher priority than semantic search
+  - Array element structure:
+    - `en` (required): English exact match keywords
+    - `cn` (required): Chinese exact match keywords
+
+**Return Quantity Limits:** 
+- Keyword exact matching: Controlled by environment variable `MAX_KEYWORD_RESULTS`, default 10 results
+- Semantic search: Controlled by environment variable `MAX_SEMANTIC_RESULTS`, default 10 results
 
 **Return Data Format:**
 ```json
@@ -87,14 +90,16 @@ Query and return Unreal Engine official documentation link lists, supporting **h
     "en": "animation",
     "cn": "角色动画制作"
   },
-  "keyword": {
-    "en": "blueprint",
-    "cn": "蓝图"
-  },
+  "keyword": [
+    {
+      "en": "blueprint",
+      "cn": "蓝图"
+    }
+  ],
   "combinedSearchTerm": "animation 角色动画制作",
   "searchMethod": "hybrid_search",
-  "semanticLimit": 5,
-  "keywordLimit": 5,
+  "maxKeywordResults": 10,
+  "maxSemanticResults": 10,
   "keywordResultCount": 3,
   "semanticResultCount": 2,
   "vectorSearchAvailable": true,
@@ -104,11 +109,21 @@ Query and return Unreal Engine official documentation link lists, supporting **h
       "navTitle": "物体和角色动画制作",
       "pageTitle": "在虚幻引擎中制作角色和物体动画",
       "pageDescription": "学习如何在虚幻引擎中创建和管理角色与物体的动画系统，包括动画蓝图、状态机等高级功能。",
-      "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/animating-characters-and-objects-in-unreal-engine"
+      "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/animating-characters-and-objects-in-unreal-engine",
+      "searchSource": "keyword"
     }
   ]
 }
 ```
+
+**Return Data Field Descriptions:**
+- `navTitle`: Navigation title (from document navigation menu)
+- `pageTitle`: Page title (from page content)
+- `pageDescription`: Page description (from page content summary)
+- `link`: Documentation link
+- `searchSource`: Search source type, possible values:
+  - `"keyword"`: From keyword exact matching
+  - `"semantic"`: From vector semantic search
 
 **Search Mode Descriptions:**
 - `hybrid_search`: Hybrid search (keyword exact matching + vector semantic search)
@@ -116,11 +131,16 @@ Query and return Unreal Engine official documentation link lists, supporting **h
 - `error`: Search execution failed
 
 **Usage Examples:**
-- Hybrid animation search: `search_docs_list(search={en:"animation", cn:"角色动画"}, keyword={en:"blueprint", cn:"蓝图"})`
-- Search blueprint materials: `search_docs_list(search={en:"blueprint", cn:"蓝图编程"}, keyword={en:"material", cn:"材质"})`
-- Find installation guides: `search_docs_list(search={en:"installation", cn:"安装虚幻引擎"}, keyword={en:"guide", cn:"指南"})`
-- Physics collision search: `search_docs_list(search={en:"physics", cn:"物理仿真"}, keyword={en:"collision", cn:"碰撞"})`
-- Lighting shadow features: `search_docs_list(search={en:"lighting", cn:"光照设置"}, keyword={en:"shadow", cn:"阴影"})`
+- Hybrid animation search: `search_docs_list(search={en:"animation", cn:"角色动画"}, keyword=[{en:"blueprint", cn:"蓝图"}])`
+- Search blueprint materials: `search_docs_list(search={en:"blueprint", cn:"蓝图编程"}, keyword=[{en:"material", cn:"材质"}])`
+- Find installation guides: `search_docs_list(search={en:"installation", cn:"安装虚幻引擎"}, keyword=[{en:"guide", cn:"指南"}])`
+- Physics collision search: `search_docs_list(search={en:"physics", cn:"物理仿真"}, keyword=[{en:"collision", cn:"碰撞"}])`
+- Lighting shadow features: `search_docs_list(search={en:"lighting", cn:"光照设置"}, keyword=[{en:"shadow", cn:"阴影"}])`
+- Multi-keyword priority search: `search_docs_list(search={en:"game development", cn:"游戏开发"}, keyword=[{en:"blueprint", cn:"蓝图"}, {en:"material", cn:"材质"}, {en:"animation", cn:"动画"}])` (blueprint results prioritized, then material, finally animation)
+
+**Note:** The maximum number of search results is controlled separately by environment variables:
+- Keyword exact matching is controlled by `MAX_KEYWORD_RESULTS`, default 10 results
+- Semantic search is controlled by `MAX_SEMANTIC_RESULTS`, default 10 results
 
 ## Data Statistics
 
@@ -165,7 +185,9 @@ Based on the following technology stack:
    - Returns semantically most relevant results
 
 4. **Result Merging & Deduplication**:
-   - Prioritizes keyword matching results (high priority)
+   - Keyword matching results are sorted by keyword array order priority (earlier keyword matches appear first)
+   - Deduplicates keyword matching results, keeping the highest priority result
+   - Prioritizes keyword matching results (higher priority than semantic search)
    - Adds semantic search results (deduplicated based on link field)
    - Ensures no duplicate links, maintaining result quality
 
@@ -254,11 +276,11 @@ const expandButtons = await page.$$('.btn-expander .icon-arrow-forward-ios:not(.
 ## Environment Variables
 
 ```bash
-# Default limit for semantic search
-SEMANTIC_SEARCH_LIMIT_DEFAULT=5
+# Maximum number of keyword exact matching results
+MAX_KEYWORD_RESULTS=10
 
-# Default limit for keyword exact matching
-KEYWORD_SEARCH_LIMIT_DEFAULT=5
+# Maximum number of semantic search results
+MAX_SEMANTIC_RESULTS=10
 
 # Ollama service address
 OLLAMA_BASE_URL=http://localhost:11434

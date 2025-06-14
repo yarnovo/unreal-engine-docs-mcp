@@ -73,11 +73,14 @@
 - `search` (必需): 语义搜索关键字对象，包含英文和中文字段，使用向量语义搜索技术
   - `en` (必需): 英文语义搜索关键字
   - `cn` (必需): 中文语义搜索关键字
-- `keyword` (必需): 精确匹配关键词对象，包含英文和中文字段，通过文本小写比对进行精确匹配，优先级高于语义搜索
-  - `en` (必需): 英文精确匹配关键词
-  - `cn` (必需): 中文精确匹配关键词
-- `semanticLimit` (可选): 语义搜索返回结果的最大数量，默认5个
-- `keywordLimit` (可选): 关键词精确匹配返回结果的最大数量，默认5个
+- `keyword` (必需): 精确匹配关键词数组，每个元素包含英文和中文字段，通过文本小写比对进行精确匹配，**按数组顺序进行优先级排序**（前面的关键词匹配结果排在最前面），优先级高于语义搜索
+  - 数组中每个元素结构:
+    - `en` (必需): 英文精确匹配关键词
+    - `cn` (必需): 中文精确匹配关键词
+
+**返回数量限制:** 
+- 关键词精确匹配：通过环境变量 `MAX_KEYWORD_RESULTS` 控制，默认为10个结果
+- 语义搜索：通过环境变量 `MAX_SEMANTIC_RESULTS` 控制，默认为10个结果
 
 **返回数据格式:**
 ```json
@@ -87,14 +90,16 @@
     "en": "animation",
     "cn": "角色动画制作"
   },
-  "keyword": {
-    "en": "blueprint",
-    "cn": "蓝图"
-  },
+  "keyword": [
+    {
+      "en": "blueprint",
+      "cn": "蓝图"
+    }
+  ],
   "combinedSearchTerm": "animation 角色动画制作",
   "searchMethod": "hybrid_search",
-  "semanticLimit": 5,
-  "keywordLimit": 5,
+  "maxKeywordResults": 10,
+  "maxSemanticResults": 10,
   "keywordResultCount": 3,
   "semanticResultCount": 2,
   "vectorSearchAvailable": true,
@@ -104,11 +109,21 @@
       "navTitle": "物体和角色动画制作",
       "pageTitle": "在虚幻引擎中制作角色和物体动画",
       "pageDescription": "学习如何在虚幻引擎中创建和管理角色与物体的动画系统，包括动画蓝图、状态机等高级功能。",
-      "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/animating-characters-and-objects-in-unreal-engine"
+      "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/animating-characters-and-objects-in-unreal-engine",
+      "searchSource": "keyword"
     }
   ]
 }
 ```
+
+**返回数据字段说明:**
+- `navTitle`: 导航标题 (来自文档导航菜单)
+- `pageTitle`: 页面标题 (来自页面内容)
+- `pageDescription`: 页面描述 (来自页面内容摘要)
+- `link`: 文档链接
+- `searchSource`: 搜索来源类型，可能的值:
+  - `"keyword"`: 来自关键词精确匹配
+  - `"semantic"`: 来自向量语义搜索
 
 **搜索模式说明:**
 - `hybrid_search`: 混合搜索 (关键词精确匹配 + 向量语义搜索)
@@ -116,11 +131,16 @@
 - `error`: 搜索执行失败
 
 **使用示例:**
-- 混合搜索动画: `search_docs_list(search={en:"animation", cn:"角色动画"}, keyword={en:"blueprint", cn:"蓝图"})`
-- 搜索蓝图材质: `search_docs_list(search={en:"blueprint", cn:"蓝图编程"}, keyword={en:"material", cn:"材质"})`
-- 查找安装指南: `search_docs_list(search={en:"installation", cn:"安装虚幻引擎"}, keyword={en:"guide", cn:"指南"})`
-- 物理碰撞搜索: `search_docs_list(search={en:"physics", cn:"物理仿真"}, keyword={en:"collision", cn:"碰撞"})`
-- 光照阴影功能: `search_docs_list(search={en:"lighting", cn:"光照设置"}, keyword={en:"shadow", cn:"阴影"})`
+- 混合搜索动画: `search_docs_list(search={en:"animation", cn:"角色动画"}, keyword=[{en:"blueprint", cn:"蓝图"}])`
+- 搜索蓝图材质: `search_docs_list(search={en:"blueprint", cn:"蓝图编程"}, keyword=[{en:"material", cn:"材质"}])`
+- 查找安装指南: `search_docs_list(search={en:"installation", cn:"安装虚幻引擎"}, keyword=[{en:"guide", cn:"指南"}])`
+- 物理碰撞搜索: `search_docs_list(search={en:"physics", cn:"物理仿真"}, keyword=[{en:"collision", cn:"碰撞"}])`
+- 光照阴影功能: `search_docs_list(search={en:"lighting", cn:"光照设置"}, keyword=[{en:"shadow", cn:"阴影"}])`
+- 多关键词优先级搜索: `search_docs_list(search={en:"game development", cn:"游戏开发"}, keyword=[{en:"blueprint", cn:"蓝图"}, {en:"material", cn:"材质"}, {en:"animation", cn:"动画"}])` (blueprint匹配结果优先，其次material，最后animation)
+
+**注意:** 搜索结果的最大返回数量分别由环境变量控制：
+- 关键词精确匹配由 `MAX_KEYWORD_RESULTS` 控制，默认为10个结果
+- 语义搜索由 `MAX_SEMANTIC_RESULTS` 控制，默认为10个结果
 
 ## 数据统计
 
@@ -165,7 +185,9 @@
    - 返回语义最相关的结果
 
 4. **结果合并与去重**:
-   - 优先添加关键词匹配结果 (优先级高)
+   - 关键词匹配结果按关键词数组的顺序进行优先级排序 (前面的关键词匹配结果排在前面)
+   - 对关键词匹配结果去重，保留优先级最高的结果
+   - 优先添加关键词匹配结果 (优先级高于语义搜索)
    - 添加语义搜索结果 (基于 link 字段去重)
    - 确保无重复链接，保持结果质量
 
@@ -254,11 +276,11 @@ const expandButtons = await page.$$('.btn-expander .icon-arrow-forward-ios:not(.
 ## 环境变量
 
 ```bash
-# 语义搜索默认限制数量
-SEMANTIC_SEARCH_LIMIT_DEFAULT=5
+# 关键词精确匹配最大返回数量
+MAX_KEYWORD_RESULTS=10
 
-# 关键词精确匹配默认限制数量
-KEYWORD_SEARCH_LIMIT_DEFAULT=5
+# 语义搜索最大返回数量
+MAX_SEMANTIC_RESULTS=10
 
 # Ollama服务地址
 OLLAMA_BASE_URL=http://localhost:11434
