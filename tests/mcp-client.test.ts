@@ -66,7 +66,7 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
   });
 
   it('应该能调用混合搜索工具 (对象参数结构)', async () => {
-    console.log("\n🔧 测试1: 调用混合搜索工具 (对象参数结构)");
+    console.log("\n🔧 测试1: 调用混合搜索工具 (数组关键词结构)");
     const result = await client.callTool({
       name: "search_docs_list",
       arguments: {
@@ -74,12 +74,12 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
           en: "animation",
           cn: "角色动画"
         },
-        keyword: {
-          en: "blueprint",
-          cn: "蓝图"
-        },
-        semanticLimit: 3,
-        keywordLimit: 2,
+        keyword: [
+          {
+            en: "blueprint",
+            cn: "蓝图"
+          }
+        ],
       },
     });
 
@@ -92,21 +92,21 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
     const data = JSON.parse(content.content[0].text);
     expect(data.total).toBeDefined();
     expect(data.search).toEqual({ en: "animation", cn: "角色动画" });
-    expect(data.keyword).toEqual({ en: "blueprint", cn: "蓝图" });
+    expect(data.keyword).toEqual([{ en: "blueprint", cn: "蓝图" }]);
     expect(data.combinedSearchTerm).toBe("角色动画 animation");
     expect(data.searchMethod).toBeDefined();
-    expect(data.semanticLimit).toBe(3);
-    expect(data.keywordLimit).toBe(2);
+    expect(data.maxKeywordResults).toBeDefined();
+    expect(data.maxSemanticResults).toBeDefined();
     expect(data.keywordResultCount).toBeDefined();
     expect(data.semanticResultCount).toBeDefined();
     expect(data.vectorSearchAvailable).toBeDefined();
     expect(data.links).toBeDefined();
     expect(Array.isArray(data.links)).toBe(true);
 
-    console.log("对象参数结构混合搜索结果统计:");
+    console.log("数组关键词结构混合搜索结果统计:");
     console.log(`  - 总数: ${data.total}`);
     console.log(`  - 语义搜索对象: ${JSON.stringify(data.search)}`);
-    console.log(`  - 关键词对象: ${JSON.stringify(data.keyword)}`);
+    console.log(`  - 关键词数组: ${JSON.stringify(data.keyword)}`);
     console.log(`  - 合并搜索词: ${data.combinedSearchTerm}`);
     console.log(`  - 搜索方法: ${data.searchMethod}`);
     console.log(`  - 关键词匹配数: ${data.keywordResultCount}`);
@@ -122,7 +122,7 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
   });
 
   it('应该能执行对象结构的关键词精确匹配优先混合搜索', async () => {
-    console.log("\n🔧 测试2: 对象结构的关键词精确匹配优先混合搜索");
+    console.log("\n🔧 测试2: 数组关键词结构的精确匹配优先混合搜索");
     const result = await client.callTool({
       name: "search_docs_list",
       arguments: {
@@ -130,12 +130,12 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
           en: "animation",
           cn: "动画制作"
         },
-        keyword: {
-          en: "blueprint",
-          cn: "材质"
-        },
-        semanticLimit: 4,
-        keywordLimit: 3,
+        keyword: [
+          {
+            en: "blueprint",
+            cn: "材质"
+          }
+        ],
       },
     });
 
@@ -147,16 +147,16 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
 
     const data = JSON.parse(content.content[0].text);
     expect(data.search).toEqual({ en: "animation", cn: "动画制作" });
-    expect(data.keyword).toEqual({ en: "blueprint", cn: "材质" });
+    expect(data.keyword).toEqual([{ en: "blueprint", cn: "材质" }]);
     expect(data.combinedSearchTerm).toBe("动画制作 animation");
     expect(data.searchMethod).toBeDefined();
     expect(data.vectorSearchAvailable).toBeDefined();
     expect(data.links).toBeDefined();
     expect(Array.isArray(data.links)).toBe(true);
 
-    console.log("对象结构混合搜索结果统计:");
+    console.log("数组关键词结构混合搜索结果统计:");
     console.log(`  - 语义搜索对象: ${JSON.stringify(data.search)}`);
-    console.log(`  - 关键词对象: ${JSON.stringify(data.keyword)}`);
+    console.log(`  - 关键词数组: ${JSON.stringify(data.keyword)}`);
     console.log(`  - 合并搜索词: ${data.combinedSearchTerm}`);
     console.log(`  - 搜索方法: ${data.searchMethod}`);
     console.log(`  - 关键词匹配数: ${data.keywordResultCount}`);
@@ -168,12 +168,13 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
       console.log(`  ${index + 1}. ${link.navTitle}`);
       console.log(`     页面标题: ${link.pageTitle || "无"}`);
       console.log(`     页面描述: ${link.pageDescription || "无"}`);
+      console.log(`     搜索来源: ${link.searchSource}`);
       console.log(`     链接: ${link.link}`);
     });
   });
 
   it('应该能搜索对象结构的完整混合查询', async () => {
-    console.log("\n🔧 测试3: 对象结构的完整混合搜索");
+    console.log("\n🔧 测试3: 数组关键词结构的完整混合搜索");
     const result = await client.callTool({
       name: "search_docs_list",
       arguments: {
@@ -181,12 +182,12 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
           en: "blueprint",
           cn: "蓝图"
         },
-        keyword: {
-          en: "material",
-          cn: "材质"
-        },
-        semanticLimit: 2,
-        keywordLimit: 2,
+        keyword: [
+          {
+            en: "material",
+            cn: "材质"
+          }
+        ],
       },
     });
 
@@ -198,15 +199,15 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
 
     const data = JSON.parse(content.content[0].text);
     expect(data.search).toEqual({ en: "blueprint", cn: "蓝图" });
-    expect(data.keyword).toEqual({ en: "material", cn: "材质" });
+    expect(data.keyword).toEqual([{ en: "material", cn: "材质" }]);
     expect(data.combinedSearchTerm).toBe("蓝图 blueprint");
     expect(data.searchMethod).toBeDefined();
     expect(data.links).toBeDefined();
     expect(Array.isArray(data.links)).toBe(true);
 
-    console.log("对象结构的完整混合搜索结果统计:");
+    console.log("数组关键词结构的完整混合搜索结果统计:");
     console.log(`  - 语义搜索对象: ${JSON.stringify(data.search)}`);
-    console.log(`  - 关键词对象: ${JSON.stringify(data.keyword)}`);
+    console.log(`  - 关键词数组: ${JSON.stringify(data.keyword)}`);
     console.log(`  - 合并搜索词: ${data.combinedSearchTerm}`);
     console.log(`  - 搜索方法: ${data.searchMethod}`);
     console.log(`  - 关键词匹配数: ${data.keywordResultCount}`);
@@ -217,6 +218,7 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
       data.links.forEach((link: any, index: number) => {
         console.log(`  ${index + 1}. ${link.navTitle}`);
         console.log(`     页面标题: ${link.pageTitle || "无"}`);
+        console.log(`     搜索来源: ${link.searchSource}`);
         console.log(`     链接: ${link.link}`);
       });
     } else {
@@ -226,21 +228,19 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
 
   it('应该能执行多种对象结构的混合搜索组合', async () => {
     const searchCombinations = [
-      { search: { en: "animation", cn: "动画" }, keyword: { en: "character", cn: "角色" }, name: "动画+角色" },
-      { search: { en: "physics", cn: "物理" }, keyword: { en: "collision", cn: "碰撞" }, name: "物理+碰撞" },
-      { search: { en: "material", cn: "材质" }, keyword: { en: "shader", cn: "着色器" }, name: "材质+着色器" },
-      { search: { en: "lighting", cn: "光照" }, keyword: { en: "shadow", cn: "阴影" }, name: "光照+阴影" },
+      { search: { en: "animation", cn: "动画" }, keyword: [{ en: "character", cn: "角色" }], name: "动画+角色" },
+      { search: { en: "physics", cn: "物理" }, keyword: [{ en: "collision", cn: "碰撞" }], name: "物理+碰撞" },
+      { search: { en: "material", cn: "材质" }, keyword: [{ en: "shader", cn: "着色器" }], name: "材质+着色器" },
+      { search: { en: "lighting", cn: "光照" }, keyword: [{ en: "shadow", cn: "阴影" }], name: "光照+阴影" },
     ];
     
     for (const combo of searchCombinations) {
-      console.log(`\n🔧 测试对象结构混合搜索: ${combo.name}`);
+      console.log(`\n🔧 测试数组关键词结构混合搜索: ${combo.name}`);
       const result = await client.callTool({
         name: "search_docs_list",
         arguments: {
           search: combo.search,
           keyword: combo.keyword,
-          semanticLimit: 2,
-          keywordLimit: 1,
         },
       });
 
@@ -268,5 +268,184 @@ describe.skipIf(isCI)('MCP 服务端测试', () => {
         console.log(`  - 首个结果: ${data.links[0].navTitle}`);
       }
     }
+  });
+
+  it('应该能执行多个关键词的数组搜索', async () => {
+    console.log("\n🔧 测试4: 多个关键词数组搜索");
+    const result = await client.callTool({
+      name: "search_docs_list",
+      arguments: {
+        search: {
+          en: "game development",
+          cn: "游戏开发"
+        },
+        keyword: [
+          {
+            en: "blueprint",
+            cn: "蓝图"
+          },
+          {
+            en: "material",
+            cn: "材质"
+          },
+          {
+            en: "animation",
+            cn: "动画"
+          }
+        ],
+      },
+    });
+
+    expect(result).toBeDefined();
+    const content = result as any;
+    expect(content.content).toBeDefined();
+    expect(content.content.length).toBeGreaterThan(0);
+    expect(content.content[0].type).toBe("text");
+
+    const data = JSON.parse(content.content[0].text);
+    expect(data.search).toEqual({ en: "game development", cn: "游戏开发" });
+    expect(data.keyword).toHaveLength(3);
+    expect(data.keyword).toEqual([
+      { en: "blueprint", cn: "蓝图" },
+      { en: "material", cn: "材质" },
+      { en: "animation", cn: "动画" }
+    ]);
+    expect(data.combinedSearchTerm).toBe("游戏开发 game development");
+    expect(data.searchMethod).toBeDefined();
+    expect(data.links).toBeDefined();
+    expect(Array.isArray(data.links)).toBe(true);
+
+    console.log("多个关键词数组搜索结果统计:");
+    console.log(`  - 语义搜索对象: ${JSON.stringify(data.search)}`);
+    console.log(`  - 关键词数组长度: ${data.keyword.length}`);
+    console.log(`  - 关键词数组: ${JSON.stringify(data.keyword)}`);
+    console.log(`  - 合并搜索词: ${data.combinedSearchTerm}`);
+    console.log(`  - 搜索方法: ${data.searchMethod}`);
+    console.log(`  - 关键词匹配数: ${data.keywordResultCount}`);
+    console.log(`  - 语义搜索数: ${data.semanticResultCount}`);
+    console.log(`  - 向量搜索可用: ${data.vectorSearchAvailable}`);
+    console.log(`  - 返回链接数: ${data.links.length}`);
+    console.log("搜索结果 (按关键词优先级排序):");
+    data.links.slice(0, 5).forEach((link: any, index: number) => {
+      console.log(`  ${index + 1}. ${link.navTitle}`);
+      console.log(`     页面标题: ${link.pageTitle || "无"}`);
+      console.log(`     搜索来源: ${link.searchSource}`);
+      console.log(`     链接: ${link.link}`);
+    });
+  });
+
+  it('应该能验证搜索来源字段', async () => {
+    console.log("\n🔧 测试: 验证搜索来源字段");
+    const result = await client.callTool({
+      name: "search_docs_list",
+      arguments: {
+        search: {
+          en: "animation",
+          cn: "动画"
+        },
+        keyword: [
+          {
+            en: "blueprint",
+            cn: "蓝图"
+          }
+        ],
+      },
+    });
+
+    expect(result).toBeDefined();
+    const content = result as any;
+    expect(content.content).toBeDefined();
+    expect(content.content.length).toBeGreaterThan(0);
+    expect(content.content[0].type).toBe("text");
+
+    const data = JSON.parse(content.content[0].text);
+    expect(data.links).toBeDefined();
+    expect(Array.isArray(data.links)).toBe(true);
+
+    // 验证每个链接都有 searchSource 字段
+    data.links.forEach((link: any, index: number) => {
+      expect(link.searchSource).toBeDefined();
+      expect(['keyword', 'semantic']).toContain(link.searchSource);
+      console.log(`  ${index + 1}. ${link.navTitle} - 来源: ${link.searchSource}`);
+    });
+
+    console.log(`✅ 所有 ${data.links.length} 个链接都包含有效的搜索来源字段`);
+  });
+
+  it('应该能按关键词优先级排序搜索结果', async () => {
+    console.log("\n🔧 测试: 验证关键词优先级排序");
+    const result = await client.callTool({
+      name: "search_docs_list",
+      arguments: {
+        search: {
+          en: "game",
+          cn: "游戏"
+        },
+        keyword: [
+          {
+            en: "lighting", // 第1优先级
+            cn: "光照"
+          },
+          {
+            en: "material", // 第2优先级  
+            cn: "材质"
+          },
+          {
+            en: "animation", // 第3优先级
+            cn: "动画"
+          }
+        ],
+      },
+    });
+
+    expect(result).toBeDefined();
+    const content = result as any;
+    expect(content.content).toBeDefined();
+    expect(content.content.length).toBeGreaterThan(0);
+    expect(content.content[0].type).toBe("text");
+
+    const data = JSON.parse(content.content[0].text);
+    expect(data.links).toBeDefined();
+    expect(Array.isArray(data.links)).toBe(true);
+
+    console.log("关键词优先级排序测试结果:");
+    console.log(`  - 关键词数组: ${JSON.stringify(data.keyword)}`);
+    console.log(`  - 关键词匹配数: ${data.keywordResultCount}`);
+    console.log(`  - 语义搜索数: ${data.semanticResultCount}`);
+    console.log(`  - 返回链接数: ${data.links.length}`);
+
+    // 分析关键词搜索结果的排序
+    const keywordResults = data.links.filter((link: any) => link.searchSource === 'keyword');
+    if (keywordResults.length > 0) {
+      console.log("关键词搜索结果 (应按优先级排序):");
+      keywordResults.forEach((link: any, index: number) => {
+        // 检查哪个关键词匹配了
+        let matchedKeyword = "";
+        const searchFields = [
+          link.navTitle?.toLowerCase() || "",
+          link.pageTitle?.toLowerCase() || "",
+          link.pageDescription?.toLowerCase() || "",
+        ];
+        
+        data.keyword.forEach((kw: any, kwIndex: number) => {
+          const keywordTerm = kw.en.toLowerCase();
+          const keywordCnTerm = kw.cn.toLowerCase();
+          
+          if (searchFields.some((field: string) => 
+            field.includes(keywordTerm) || field.includes(keywordCnTerm)
+          )) {
+            if (!matchedKeyword) {
+              matchedKeyword = `第${kwIndex + 1}优先级: "${kw.en}/${kw.cn}"`;
+            }
+          }
+        });
+
+        console.log(`    ${index + 1}. ${link.navTitle}`);
+        console.log(`       匹配关键词: ${matchedKeyword}`);
+        console.log(`       页面标题: ${link.pageTitle || "无"}`);
+      });
+    }
+
+    console.log(`✅ 关键词优先级排序测试完成`);
   });
 });

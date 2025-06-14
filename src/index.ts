@@ -17,6 +17,7 @@ interface EnhancedLink {
   link: string;
   pageTitle?: string; // 页面标题
   pageDescription?: string; // 页面描述
+  searchSource: 'keyword' | 'semantic'; // 搜索来源类型
 }
 
 // Load package.json to get version
@@ -78,23 +79,23 @@ const server = new McpServer({
 const vectorSearch = getVectorSearchEngine();
 
 console.log(
-  "process.env.SEMANTIC_SEARCH_LIMIT_DEFAULT",
-  process.env.SEMANTIC_SEARCH_LIMIT_DEFAULT
+  "process.env.MAX_KEYWORD_RESULTS",
+  process.env.MAX_KEYWORD_RESULTS
 );
 console.log(
-  "process.env.KEYWORD_SEARCH_LIMIT_DEFAULT",
-  process.env.KEYWORD_SEARCH_LIMIT_DEFAULT
+  "process.env.MAX_SEMANTIC_RESULTS",
+  process.env.MAX_SEMANTIC_RESULTS
 );
 
-const semanticSearchLimitDefault = parseInt(
-  process.env.SEMANTIC_SEARCH_LIMIT_DEFAULT || "10"
+const maxKeywordResults = parseInt(
+  process.env.MAX_KEYWORD_RESULTS || "10"
 );
-const keywordSearchLimitDefault = parseInt(
-  process.env.KEYWORD_SEARCH_LIMIT_DEFAULT || "10"
+const maxSemanticResults = parseInt(
+  process.env.MAX_SEMANTIC_RESULTS || "10"
 );
 
-console.log("semanticSearchLimitDefault", semanticSearchLimitDefault);
-console.log("keywordSearchLimitDefault", keywordSearchLimitDefault);
+console.log("maxKeywordResults", maxKeywordResults);
+console.log("maxSemanticResults", maxSemanticResults);
 
 // Get all Unreal Engine documentation links with optional search
 server.tool(
@@ -110,23 +111,15 @@ server.tool(
         "语义搜索关键字对象，包含英文和中文，将使用向量语义搜索技术返回最相关的结果"
       ),
     keyword: z
-      .object({
-        en: z.string().describe("英文精确匹配关键词"),
-        cn: z.string().describe("中文精确匹配关键词"),
-      })
+      .array(
+        z.object({
+          en: z.string().describe("英文精确匹配关键词"),
+          cn: z.string().describe("中文精确匹配关键词"),
+        })
+      )
       .describe(
-        "精确匹配关键词对象，包含英文和中文，将通过文本小写比对进行精确匹配，返回结果排序优先级高于语义搜索"
+        "精确匹配关键词数组，每个元素包含英文和中文关键词，将通过文本小写比对进行精确匹配，只要匹配上其中一个关键词即返回结果，前面的关键词匹配结果排在最前面，返回结果排序优先级高于语义搜索"
       ),
-    semanticLimit: z
-      .number()
-      .optional()
-      .default(semanticSearchLimitDefault)
-      .describe("语义搜索返回结果的最大数量"),
-    keywordLimit: z
-      .number()
-      .optional()
-      .default(keywordSearchLimitDefault)
-      .describe("关键词精确匹配返回结果的最大数量"),
   },
   {
     readOnlyHint: true,
@@ -139,27 +132,60 @@ server.tool(
       let searchMethod = "no_search"; // 默认无搜索
       let errorMessage = null;
 
-      // 关键词精确匹配 (英文+中文)
-      const keywordTerm = args.keyword.en.toLowerCase();
-      const keywordCnTerm = args.keyword.cn.toLowerCase();
+      // 关键词精确匹配 (支持多个关键词，按优先级排序)
       console.log(
-        `🔍 执行关键词精确匹配: "${keywordTerm}" + "${keywordCnTerm}"`
+        `🔍 执行关键词精确匹配: ${args.keyword.length} 个关键词组`
       );
+      args.keyword.forEach((kw, index) => {
+        console.log(`  ${index + 1}. "${kw.en}" + "${kw.cn}"`);
+      });
 
-      keywordResults = enhancedDocLinks
-        .filter((link) => {
+      // 为每个关键词组分别查找匹配结果，并记录优先级
+      const keywordResultsWithPriority: Array<EnhancedLink & { priority: number }> = [];
+      
+      args.keyword.forEach((keywordGroup, keywordIndex) => {
+        const keywordTerm = keywordGroup.en.toLowerCase();
+        const keywordCnTerm = keywordGroup.cn.toLowerCase();
+        
+        const matchedLinks = enhancedDocLinks.filter((link) => {
           const searchFields = [
             link.navTitle?.toLowerCase() || "",
             link.pageTitle?.toLowerCase() || "",
             link.pageDescription?.toLowerCase() || "",
           ];
-          // 同时匹配英文关键词和中文关键词
+          
           return searchFields.some(
             (field) =>
               field.includes(keywordTerm) || field.includes(keywordCnTerm)
           );
-        })
-        .slice(0, args.keywordLimit);
+        });
+        
+        // 将匹配结果添加到总结果中，并标记优先级
+        matchedLinks.forEach((link) => {
+          keywordResultsWithPriority.push({
+            ...link,
+            searchSource: 'keyword' as const,
+            priority: keywordIndex, // 关键词在数组中的索引作为优先级
+          });
+        });
+        
+        console.log(`  关键词组 ${keywordIndex + 1} ("${keywordGroup.en}" + "${keywordGroup.cn}") 匹配到 ${matchedLinks.length} 个结果`);
+      });
+      
+      // 去重（按 link 去重，保留优先级最高的）
+      const linkMap = new Map<string, EnhancedLink & { priority: number }>();
+      keywordResultsWithPriority.forEach((result) => {
+        const existingResult = linkMap.get(result.link);
+        if (!existingResult || result.priority < existingResult.priority) {
+          linkMap.set(result.link, result);
+        }
+      });
+      
+      // 按优先级排序，然后应用最大结果数限制
+      keywordResults = Array.from(linkMap.values())
+        .sort((a, b) => a.priority - b.priority) // 优先级低的数字排在前面
+        .map(({ priority, ...link }) => link) // 移除临时的 priority 字段
+        .slice(0, maxKeywordResults);
 
       console.log(`✅ 关键词匹配找到 ${keywordResults.length} 个结果`);
 
@@ -177,7 +203,7 @@ server.tool(
           console.log(`🤖 执行向量语义搜索...`);
           const vectorSearchResults = await vectorSearch.search(
             combinedSearchTerm,
-            args.semanticLimit
+            maxSemanticResults
           );
 
           semanticResults = vectorSearchResults.map((result) => ({
@@ -185,6 +211,7 @@ server.tool(
             link: result.link,
             pageTitle: result.pageTitle,
             pageDescription: result.pageDescription,
+            searchSource: 'semantic' as const,
           }));
 
           console.log(`✅ 向量搜索找到 ${semanticResults.length} 个结果`);
@@ -239,8 +266,8 @@ server.tool(
         keyword: args.keyword,
         combinedSearchTerm: combinedSearchTerm,
         searchMethod,
-        semanticLimit: args.semanticLimit,
-        keywordLimit: args.keywordLimit,
+        maxKeywordResults: maxKeywordResults,
+        maxSemanticResults: maxSemanticResults,
         keywordResultCount: keywordResults.length,
         semanticResultCount: semanticResults.length,
         vectorSearchAvailable,
@@ -250,6 +277,7 @@ server.tool(
           pageTitle: link.pageTitle || "", // 页面标题
           pageDescription: link.pageDescription || "", // 页面描述
           link: link.link,
+          searchSource: link.searchSource, // 搜索来源类型
         })),
       };
 
@@ -271,8 +299,8 @@ server.tool(
         keyword: args.keyword,
         combinedSearchTerm: `${args.search.cn} ${args.search.en}`,
         searchMethod: "error",
-        semanticLimit: args.semanticLimit,
-        keywordLimit: args.keywordLimit,
+        maxKeywordResults: maxKeywordResults,
+        maxSemanticResults: maxSemanticResults,
         keywordResultCount: 0,
         semanticResultCount: 0,
         vectorSearchAvailable: false,
