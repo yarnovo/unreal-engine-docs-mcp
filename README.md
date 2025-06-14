@@ -24,6 +24,21 @@
 
 ## 在MCP客户端中如何使用
 
+### 前置要求
+
+为了使用语义搜索功能，需要先安装Ollama和向量嵌入模型：
+
+```bash
+# 1. 安装 Ollama (根据你的操作系统)
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# 2. 启动 Ollama 服务
+ollama serve
+
+# 3. 下载嵌入模型
+ollama pull bge-m3
+```
+
 ### Cursor 配置
 
 在项目根目录创建或编辑 `.cursor/mcp.json` 配置文件：
@@ -36,7 +51,12 @@
             "args": [
                 "-y",
                 "unreal-engine-docs-mcp"
-            ]
+            ],
+            "env": {
+                "MAX_KEYWORD_RESULTS": "20",
+                "MAX_SEMANTIC_RESULTS": "20",
+                "OLLAMA_BASE_URL": "http://localhost:11434"
+            }
         }
     }
 }
@@ -55,7 +75,12 @@
             "args": [
                 "-y",
                 "unreal-engine-docs-mcp"
-            ]
+            ],
+            "env": {
+                "MAX_KEYWORD_RESULTS": "20",
+                "MAX_SEMANTIC_RESULTS": "20",
+                "OLLAMA_BASE_URL": "http://localhost:11434"
+            }
         }
     }
 }
@@ -288,15 +313,6 @@ OLLAMA_BASE_URL=http://localhost:11434
 
 ## 开发与测试
 
-### 运行测试
-```bash
-# 执行所有测试
-npm test
-
-# 监视模式运行测试
-npm run test:watch
-```
-
 ### 文件结构
 
 ```
@@ -333,9 +349,18 @@ npm run test:watch
    # 安装 Ollama (根据你的操作系统)
    curl -fsSL https://ollama.ai/install.sh | sh
    
+   # 启动 Ollama 服务
+   ollama serve
+   
    # 下载嵌入模型
    ollama pull bge-m3
    ```
+
+#### 克隆项目到本地
+```bash
+git clone https://github.com/your-username/unreal-engine-docs-mcp.git
+cd unreal-engine-docs-mcp
+```
 
 #### 安装依赖
 ```bash
@@ -347,17 +372,25 @@ npm install
 npm run build
 ```
 
-### 使用方法
+### 使用现有数据
 
-#### 1. 构建文档数据
+项目的 `sources/` 目录已经包含了预处理好的元数据：
+- `enhanced-list.json`: 包含2415个虚幻引擎文档链接的完整数据
+- `db/`: 预构建的向量数据库文件
 
-完整的构建流程：
+你可以直接使用这些数据，无需重新构建。
+
+### 重新构建文档数据 (可选)
+
+如果需要获取最新的文档数据，可以重新构建：
+
+#### 完整构建流程
 ```bash
 # 完整构建流程 (获取导航→解析→获取描述→合并数据)
 npm run build-docs
 ```
 
-分步执行：
+#### 分步执行
 ```bash
 # 1. 获取动态导航结构
 npm run fetch-nav
@@ -372,9 +405,9 @@ npm run fetch-descriptions
 npm run merge-data
 ```
 
-#### 2. 构建向量数据库 (可选)
+### 构建向量数据库
 
-如果需要使用语义搜索功能：
+如果需要重新构建向量数据库：
 ```bash
 # 确保 Ollama 服务正在运行
 ollama serve
@@ -383,10 +416,16 @@ ollama serve
 npm run build-vector-db
 ```
 
-#### 3. 运行MCP服务器
+### 测试
+
+你可以编写测试用例在 `tests/` 目录中：
+
 ```bash
-# 开发模式
-npm run dev
+# 执行所有测试
+npm test
+
+# 监视模式运行测试
+npm run test:watch
 ```
 
 ## 故障排除

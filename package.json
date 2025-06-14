@@ -20,7 +20,6 @@
     "ai"
   ],
   "scripts": {
-    "dev": "npm run build && node dist/src/index.js",
     "build": "rimraf dist && tsc --project tsconfig.build.json",
     "test": "vitest run",
     "test:watch": "vitest",

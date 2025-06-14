@@ -24,6 +24,21 @@ This project provides an MCP (Model Context Protocol) server specifically design
 
 ## How to Use in MCP Clients
 
+### Prerequisites
+
+To use semantic search functionality, you need to install Ollama and vector embedding models first:
+
+```bash
+# 1. Install Ollama (based on your operating system)
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# 2. Start Ollama service
+ollama serve
+
+# 3. Download embedding model
+ollama pull bge-m3
+```
+
 ### Cursor Configuration
 
 Create or edit the `.cursor/mcp.json` configuration file in your project root directory:
@@ -36,7 +51,12 @@ Create or edit the `.cursor/mcp.json` configuration file in your project root di
             "args": [
                 "-y",
                 "unreal-engine-docs-mcp"
-            ]
+            ],
+            "env": {
+                "MAX_KEYWORD_RESULTS": "20",
+                "MAX_SEMANTIC_RESULTS": "20",
+                "OLLAMA_BASE_URL": "http://localhost:11434"
+            }
         }
     }
 }
@@ -55,7 +75,12 @@ Create or edit the `.vscode/mcp.json` configuration file in your project root di
             "args": [
                 "-y",
                 "unreal-engine-docs-mcp"
-            ]
+            ],
+            "env": {
+                "MAX_KEYWORD_RESULTS": "20",
+                "MAX_SEMANTIC_RESULTS": "20",
+                "OLLAMA_BASE_URL": "http://localhost:11434"
+            }
         }
     }
 }
@@ -288,15 +313,6 @@ OLLAMA_BASE_URL=http://localhost:11434
 
 ## Development & Testing
 
-### Running Tests
-```bash
-# Execute all tests
-npm test
-
-# Run tests in watch mode
-npm run test:watch
-```
-
 ### File Structure
 
 ```
@@ -333,9 +349,18 @@ npm run test:watch
    # Install Ollama (according to your operating system)
    curl -fsSL https://ollama.ai/install.sh | sh
    
+   # Start Ollama service
+   ollama serve
+   
    # Download embedding model
    ollama pull bge-m3
    ```
+
+#### Clone Project to Local
+```bash
+git clone https://github.com/your-username/unreal-engine-docs-mcp.git
+cd unreal-engine-docs-mcp
+```
 
 #### Install Dependencies
 ```bash
@@ -347,17 +372,25 @@ npm install
 npm run build
 ```
 
-### Usage
+### Using Existing Data
 
-#### 1. Build Documentation Data
+The project's `sources/` directory already contains preprocessed metadata:
+- `enhanced-list.json`: Complete data for 2415 Unreal Engine documentation links
+- `db/`: Pre-built vector database files
 
-Complete build process:
+You can use this data directly without rebuilding.
+
+### Rebuild Documentation Data (Optional)
+
+If you need to get the latest documentation data, you can rebuild:
+
+#### Complete Build Process
 ```bash
 # Complete build process (fetch navigation → parse → fetch descriptions → merge data)
 npm run build-docs
 ```
 
-Step-by-step execution:
+#### Step-by-step Execution
 ```bash
 # 1. Fetch dynamic navigation structure
 npm run fetch-nav
@@ -372,9 +405,9 @@ npm run fetch-descriptions
 npm run merge-data
 ```
 
-#### 2. Build Vector Database (Optional)
+### Build Vector Database
 
-If you need to use semantic search functionality:
+If you need to rebuild the vector database:
 ```bash
 # Ensure Ollama service is running
 ollama serve
@@ -383,10 +416,16 @@ ollama serve
 npm run build-vector-db
 ```
 
-#### 3. Run MCP Server
+### Testing
+
+You can write test cases in the `tests/` directory:
+
 ```bash
-# Development mode
-npm run dev
+# Execute all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
 ```
 
 ## Troubleshooting
