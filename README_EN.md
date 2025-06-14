@@ -88,6 +88,23 @@ Create or edit the `.vscode/mcp.json` configuration file in your project root di
 
 After configuration, restart your IDE to use the Unreal Engine documentation search functionality in your AI assistant.
 
+### Environment Variables
+
+You can adjust the search behavior by setting environment variables. These variables can be configured in the `env` field of `.cursor/mcp.json` or `.vscode/mcp.json`.
+
+| Environment Variable   | Meaning                                                                 | Default Value            |
+| ---------------------- | ----------------------------------------------------------------------- | ------------------------ |
+| `MAX_KEYWORD_RESULTS`  | The maximum number of results returned for keyword exact matching.      | `10`                     |
+| `MAX_SEMANTIC_RESULTS` | The maximum number of results returned for vector semantic search.      | `10`                     |
+| `OLLAMA_BASE_URL`      | The address of the Ollama service, used for generating vector embeddings. | `http://localhost:11434` |
+
+**Performance and Token Consumption:**
+
+The values of `MAX_KEYWORD_RESULTS` and `MAX_SEMANTIC_RESULTS` determine the number of results returned.
+- **Higher Values**: Return more relevant documents, providing richer context for the large language model, which can improve the accuracy of its responses.
+- **Token Consumption**: Each returned document link (link item) consumes about 50 tokens. If you set both `MAX_KEYWORD_RESULTS` and `MAX_SEMANTIC_RESULTS` to 100, the theoretical maximum token consumption would be close to `(100 + 100) * 50 = 10,000` tokens.
+- **Recommended Value**: Considering that exact match results are often fewer, the actual consumption is typically around 5,000 tokens. We recommend setting both values to `100` for optimal results. However, you can adjust these values based on your token usage costs and accuracy requirements.
+
 ## MCP Tool Functions
 
 ### search_docs_list
@@ -136,7 +153,8 @@ Query and return Unreal Engine official documentation link lists, supporting **h
       "pageDescription": "学习如何在虚幻引擎中创建和管理角色与物体的动画系统，包括动画蓝图、状态机等高级功能。",
       "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/animating-characters-and-objects-in-unreal-engine",
       "searchSource": "keyword"
-    }
+    },
+    ...
   ]
 }
 ```

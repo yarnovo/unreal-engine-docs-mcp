@@ -88,6 +88,23 @@ ollama pull bge-m3
 
 配置完成后，重启你的IDE，就可以在AI助手中使用虚幻引擎文档搜索功能了。
 
+### 环境变量说明
+
+您可以通过设置环境变量来调整搜索行为。这些变量可以在 `.cursor/mcp.json` 或 `.vscode/mcp.json` 的 `env` 字段中配置。
+
+| 环境变量               | 含义                                                                                                                                                                                            | 默认值                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `MAX_KEYWORD_RESULTS`  | 关键词精确匹配返回的最大结果数量。                                                                                                                                                              | `10`                    |
+| `MAX_SEMANTIC_RESULTS` | 向量语义搜索返回的最大结果数量。                                                                                                                                                                | `10`                    |
+| `OLLAMA_BASE_URL`      | Ollama 服务的地址，用于生成向量嵌入。                                                                                                                                                           | `http://localhost:11434` |
+
+**性能与Token消耗说明:**
+
+`MAX_KEYWORD_RESULTS` 和 `MAX_SEMANTIC_RESULTS` 的值决定了返回结果的数量。
+- **更高的值**: 返回更多相关文档，可以为大语言模型提供更丰富的上下文，从而提高回答的准确性。
+- **Token 消耗**: 每个返回的文档链接（link item）大约消耗 50 个 Token。如果您将 `MAX_KEYWORD_RESULTS` 和 `MAX_SEMANTIC_RESULTS` 都设置为 100，理论上最大 Token 消耗将接近 `(100 + 100) * 50 = 10,000` 个 Token。
+- **推荐值**: 考虑到精确搜索的结果通常较少，实际消耗通常在 5000 个 Token 左右。我们推荐将这两个值都设置为 `100` 以获得最佳效果。但您可以根据自己的 Token 使用成本和对准确性的要求，自行调整这些值。
+
 ## MCP工具功能
 
 ### search_docs_list
@@ -136,7 +153,8 @@ ollama pull bge-m3
       "pageDescription": "学习如何在虚幻引擎中创建和管理角色与物体的动画系统，包括动画蓝图、状态机等高级功能。",
       "link": "https://dev.epicgames.com/documentation/zh-cn/unreal-engine/animating-characters-and-objects-in-unreal-engine",
       "searchSource": "keyword"
-    }
+    },
+    ...
   ]
 }
 ```
