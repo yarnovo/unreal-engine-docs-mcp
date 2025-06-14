@@ -3,7 +3,15 @@
   "version": "0.3.4",
   "description": "MCP server for Unreal Engine documentation",
   "license": "ISC",
-  "author": "",
+  "author": "Yarnovo <yarnb@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yarnovo/unreal-engine-docs-mcp"
+  },
+  "homepage": "https://github.com/yarnovo/unreal-engine-docs-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/yarnovo/unreal-engine-docs-mcp/issues"
+  },
   "type": "module",
   "main": "dist/src/index.js",
   "bin": "dist/src/index.js",
